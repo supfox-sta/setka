@@ -10,7 +10,7 @@ _[English](README.md)_
 
 ## Установка
 
-Инструкции по установке доступны по ссылке: [https://github.com/supfox-sta/setka/](https://github.com/supfox-sta/setka/)
+Инструкции по установке доступны по ссылке: [https://vsetke.fun/install](https://vsetke.fun/install)
 
 ## Возможности
 
