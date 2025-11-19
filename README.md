@@ -10,7 +10,7 @@ This project is based on [OpenVK](https://github.com/openvk/openvk), a fan-made 
 
 ## Installation
 
-For installation instructions, please visit: [https://github.com/supfox-sta/setka/](https://github.com/supfox-sta/setka/)
+For installation instructions, please visit: [https://vsetke.fun/install](https://vsetke.fun/install)
 
 ## Features
 
