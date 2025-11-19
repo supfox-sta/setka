@@ -1,11 +1,10 @@
-
 # <img align="right" src="/Web/static/img/logo_shadow.png" alt="Сетка" title="Сетка" width="15%">Сетка | Social Network of Nostalgia
 
 _[Русский](README_RU.md)_
 
 **Сетка** is a free and open-source social network platform inspired by the classic VKontakte (VK) interface and features. It's designed for nostalgia lovers who miss the old-school social networking experience.
 
-This project is a fan-made initiative, not affiliated with VKontakte or its parent company VK Ltd. It's built using PHP and modern web technologies to recreate the familiar feel of early 2000s social media.
+This project is based on [OpenVK](https://github.com/openvk/openvk), a fan-made initiative not affiliated with VKontakte or its parent company VK Ltd. It's built using PHP and modern web technologies to recreate the familiar feel of early 2000s social media.
 
 **Note for GitHub users**: This repository has been sanitized for public sharing. Configuration files (`openvk.yml`) have had sensitive information (API keys, passwords, personal data) replaced with placeholders. You will need to configure these before deploying. See installation instructions below.
 
@@ -52,19 +51,19 @@ To be honest, we don't know whether if it even works. However, this version is m
 
 ## When's the release?
 
-We will release OpenVK as soon as it's ready. As for now, you can:
+We will release Сетка as soon as it's ready. As for now, you can:
 * `git clone` this repo's master branch (use `git pull` to update)
-* Grab a prebuilt OpenVK distro from [GitHub artifacts](https://nightly.link/openvk/archive/workflows/nightly/master/OpenVK%20Archive.zip)
+* Grab a prebuilt Сетка distro from [GitHub artifacts](https://nightly.link/openvk/archive/workflows/nightly/master/OpenVK%20Archive.zip)
 
 ## Instances
 
 A list of instances can be found in [our wiki of this repository](https://github.com/openvk/openvk/wiki/Instances).
 
-## Can I create my own OpenVK instance?
+## Can I create my own Сетка instance?
 
 Yes! And you are very welcome to.
 
-However, OVK makes use of Chandler Application Server. This software requires extensions, that may not be provided by your hosting provider (namely, sodium and yaml. these extensions are available on most of ISPManager hostings).
+However, Сетка makes use of Chandler Application Server. This software requires extensions, that may not be provided by your hosting provider (namely, sodium and yaml. these extensions are available on most of ISPManager hostings).
 
 If you want, you can add your instance to the list above so that people can register there.
 
@@ -91,7 +90,7 @@ Here is our minimum hardware recommendation:
 3. Install [commitcaptcha](https://github.com/openvk/commitcaptcha) and OpenVK as Chandler extensions like this:
 
 ```bash
-git clone https://github.com/openvk/openvk /path/to/chandler/extensions/available/openvk
+git clone https://github.com/supfox-sta/setka/ /path/to/chandler/extensions/available/openvk
 git clone https://github.com/openvk/commitcaptcha /path/to/chandler/extensions/available/commitcaptcha
 ```
 
@@ -141,7 +140,3 @@ You may reach out to us via:
 <a href="https://codeberg.org/OpenVK/openvk">
     <img alt="Get it on Codeberg" src="https://codeberg.org/Codeberg/GetItOnCodeberg/media/branch/main/get-it-on-blue-on-white.png" height="60">
 </a>
-=======
-# setka
-Setka Engine based on OpenVK
-
