@@ -467,6 +467,8 @@ routes:
       handler: "About->dev"
     - url: "/dev-api"
       handler: "Dev->api"
+    - url: "/install"
+      handler: "About->install"
     - url: "/dev-api/auth"
       handler: "Dev->apiAuth"
     - url: "/dev-api/messages"

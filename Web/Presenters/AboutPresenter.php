@@ -174,4 +174,9 @@ final class AboutPresenter extends OpenVKPresenter
     {
         $this->redirect("https://docs.ovk.to/");
     }
+
+    public function renderInstall(): void
+    {
+        $this->template->_template = "About/Install.xml";
+    }
 }
