@@ -1,0 +1,12 @@
+id: ios26_glass
+version: "0.0.4.0"
+openvk_version: 0
+enabled: 1
+metadata:
+    name:
+        _: "Setka Glass"
+        en: "Setka Glass"
+        ru: "Стекло BETA"
+        uk: "Setka Glass"
+    author: "Kozlik"
+    description: "A Glass theme for Setka"

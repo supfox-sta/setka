@@ -1,0 +1,624 @@
+<html n:if="!isset($parentModule) || substr($parentModule, 0, 21) === 'libchandler:absolute.'">
+    
+    <head>
+        <title>
+            {ifset title}{include title} - {/ifset}OpenVK
+        </title>
+        <meta http-equiv="Content-Type" content="application/vnd.wap.xhtml+xml;charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <link rel="shortcut icon" href="/assets/packages/static/openvk/img/icon.ico" />
+        <meta name="application-name" content="OpenVK" />
+        <meta n:ifset="$csrfToken" name="csrf" value="{$csrfToken}" />
+
+        <link rel="stylesheet" href="/themepack/mobile_ovk/0.0.1.0/stylesheet/styles.css?v=52" />
+        <link rel="stylesheet" href="/themepack/mobile_ovk/0.0.1.0/resource/vendor/pure-grid.css" />
+        <script src="/language/{php echo getLanguage()}.js" crossorigin="anonymous"></script>
+        {script "js/l10n.js"}
+        {script "js/al_api.js"}
+        {script "js/al_polls.js"}
+        {script "js/utils.js"}
+        {script "js/node_modules/msgpack-lite/dist/msgpack.min.js"}
+        {script "js/node_modules/jquery/dist/jquery.min.js"}
+        {script "js/node_modules/umbrellajs/umbrella.min.js"}
+        {script "js/node_modules/dashjs/dist/dash.all.min.js"}
+        {script "js/al_music.js"}
+
+        {ifset headIncludes}{include headIncludes}{/ifset}
+        <script defer src="/themepack/mobile_ovk/0.0.1.0/resource/menu.js"></script>
+        <script src="/themepack/mobile_ovk/0.0.1.0/resource/mobile.js?v=51"></script>
+        <style>
+            /* Global dark */
+            body.app_layer, .app, .main { background:#0b1220 !important; color:#e5e7eb; }
+            html body .app { background:#0b1220 !important; }
+            h2 { background:transparent !important; color:#e5e7eb; }
+            a { color:#93c5fd; }
+            /* Mini player visibility: hide only when no audio */
+            body:not(.has-audio) #mobile-audio-mini { display:none; }
+            a:visited { color:#a5b4fc; }
+            /* Common panels */
+            .container, .contentWrap, .content, .container_gray10, .content_subtitle, .content_post {
+                background:transparent !important; color:#e5e7eb;
+            }
+            .contentWraplegend, .contentWraplegend.photo { background:#0b1220 !important; border:0 !important; color:#e5e7eb; }
+            .contentWrap > .legend { background:#0b1220 !important; border:0 !important; color:#e5e7eb !important; }
+            .tabs, .tab, .scroll_container, .post-divider { background:transparent !important; border-color:rgba(255,255,255,0.08) !important; }
+            /* Tables */
+            table, thead, tbody, tr, td, th { background:transparent !important; border-color:rgba(255,255,255,0.08) !important; color:#e5e7eb; }
+            /* Services grid: force 2 columns */
+            #services-grid { display:grid !important; grid-template-columns:repeat(2, minmax(0,1fr)) !important; gap:10px !important; }
+            #services-grid > * { min-width:0; }
+            /* Force navbars visible on mobile */
+            #mobile-appbar { display:block !important; visibility:visible !important; z-index:2147483646 !important; }
+            #mobile-tabbar { display:block !important; visibility:visible !important; position:fixed !important; left:0 !important; right:0 !important; bottom:0 !important; z-index:2147483647 !important; opacity:1 !important; pointer-events:auto !important; height:56px !important; transform: translateZ(0) !important; }
+            /* Mini-player sits above content but below tabbar */
+            #mobile-audio-mini { bottom: calc(64px + env(safe-area-inset-bottom)) !important; z-index:2147483646 !important; }
+            /* Reserve space for tabbar so content is not hidden under it */
+            .app { padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important; }
+            /* Bottom sheet styles */
+            .services-backdrop { position:fixed; inset:0; z-index:2147483648; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); display:none; }
+            .services-backdrop.open { display:block; }
+            .services-sheet { position:absolute; left:0; right:0; bottom:0; max-height:80vh; overflow:auto; background:#0f172a; border-top-left-radius:14px; border-top-right-radius:14px; padding:12px 12px calc(16px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .28s ease; border:1px solid rgba(255,255,255,0.06); border-bottom:0; }
+            .services-backdrop.open .services-sheet { transform:translateY(0); }
+            /* Hide tabbar while Services sheet is open */
+            #mobile-services-overlay.open ~ #mobile-tabbar { display:none !important; }
+            /* Forms */
+            input[type="text"], input[type="email"], input[type="password"], input[type="date"], textarea, select {
+                background:#111827 !important; border:1px solid #1f2937 !important; color:#e5e7eb !important; border-radius:10px; }
+            .button, .primary.button { background:#1f2937; color:#e5e7eb; border:1px solid #334155; }
+            .button.primary { background:#2563eb !important; border-color:#2563eb !important; color:#fff !important; }
+            /* Misc */
+            .alert { background:#111827; color:#e5e7eb; border-color:#1f2937; }
+            /* Extra overrides for legacy white backgrounds */
+            .menuovk { background:#0b1220 !important; }
+            .login { background:#0f172a !important; }
+            .content_post { background:transparent !important; }
+            .page_wrap { background:#0b1220 !important; }
+            .settings_body { background:#0f172a !important; }
+            .content_post_comments, .content_post_comment { background:#0f172a !important; }
+            .album-photo > .album-photo--delete { background:#0f172a !important; }
+            .photobody, .mesbody, .messenger-app { background:#0b1220 !important; }
+            .rating.prmenu a { background:#111827 !important; }
+            .container_gray, .container_gray10, .lang_content, .block_white, .container_gray .content { background:#0f172a !important; }
+            #docs_page_wrapper .docs_page_search input[type="search"], .attachment_selector .attachment_search input { background-color:#111827 !important; border:1px solid #1f2937 !important; }
+            select { background:#111827 !important; border:1px solid #1f2937 !important; color:#e5e7eb !important; }
+            .feedTransition { background:#0f172a !important; border-color:rgba(255,255,255,0.08) !important; color:#e5e7eb !important; }
+            .ovk-diag { background-color:#0f172a !important; }
+            /* More light areas from stylesheet.css */
+            .logintext { background-color:#0f172a !important; color:#cbd5e1 !important; border-bottom:1px solid #1f2937 !important; }
+            .menunameava { background:#0f172a !important; border-bottom:1px solid #1f2937 !important; }
+            .menunameava:hover { background:#111827 !important; }
+            .splist:hover, .element:hover, .element:active, .splist:active, .video-list-view:active table, .container_gray a:active table { background:#111827 !important; }
+            .new_post_text { background-color:#111827 !important; }
+            .accent-box { background:#111827 !important; border-color:#334155 !important; }
+            .paginators a, .paginator { background:#111827 !important; border-color:#334155 !important; color:#e5e7eb !important; }
+            .space_menu { background-color:#0f172a !important; }
+            .text-panel_auth { background:#111827 !important; color:#cbd5e1 !important; }
+            .crp-entry:active { background:#111827 !important; }
+            .messenger-app--input { background:#0f172a !important; border-top:1px solid #1f2937 !important; }
+            #faqhead { background:#0f172a !important; border:1px solid #334155 !important; }
+            #faqcontent { background:#0f172a !important; border:1px solid #334155 !important; }
+            .alert.warn, .alert.err, .alert.fake { background-color:#0f172a !important; border-color:#334155 !important; color:#e5e7eb !important; }
+            .poll-result-bar { background-color:#111827 !important; }
+            .completeness-gauge-gold { background-color:#1f2937 !important; border-top:1px solid #334155 !important; }
+            .feedTransition:active { background:#111827 !important; }
+            .docListViewItem:hover, .attachButton:hover, .search_options_wrapper .option:hover, .clickable:active, .clickable:hover { background:#111827 !important; }
+            .highlight { background:#3b3b0a !important; border-bottom:1px solid #6b6b1a !important; }
+            #profile_basicInfo, #profile_basicInfo .info_table, #profile_basicInfo .info_table tr, #profile_basicInfo .info_table td { background:transparent !important; border-color:#334155 !important; }
+            #profile_basicInfo__info h2 { color:#e5e7eb !important; background:transparent !important; }
+            /* Registration gender pills */
+            .gender-pill input[type="radio"]:checked + span { background:#2563eb !important; color:#fff !important; border-color:#2563eb !important; }
+            .gender-pill span { transition: background .2s ease, color .2s ease, border-color .2s ease; }
+            /* Completeness gauges */
+            .completeness-gauge, .completeness-gauge-gold { background:#111827 !important; border:1px solid #334155 !important; }
+            .completeness-gauge .completeness-gauge-bar, .completeness-gauge-gold .completeness-gauge-bar { background:#2563eb !important; }
+            /* Post options label to white */
+            .post-opts label { color:#e5e7eb !important; }
+            /* Hide mobile bars on large screens */
+            @media (min-width: 821px) {
+                #mobile-appbar, #mobile-tabbar, #mobile-services-overlay { display:none !important; }
+                .main { padding-top:0 !important; padding-bottom:0 !important; }
+            }
+            /* ===== Audio pages (dark mobile restyle) ===== */
+            .coolTabs { background:transparent !important; padding:6px 0; }
+            .coolTabs .tab { margin-right:6px; }
+            .coolTabs .tab a { display:inline-block; padding:8px 12px; border-radius:10px; text-decoration:none; color:#cbd5e1; background:#111827; border:1px solid #334155; }
+            .coolTabs .tab#activetabs a, .coolTabs .tab a#act_tab_a { background:#2563eb !important; color:#fff !important; border-color:#2563eb !important; }
+            .coolTabs .searchPanel { display:flex; flex-direction:column; align-items:stretch; gap:8px; margin-top:8px; width:100%; clear:both; box-sizing:border-box; padding:0; background:transparent; }
+            .clearFix::after { content:""; display:block; clear:both; }
+            .coolTabs .searchPanel input[type="text"] { width:100%; background:#111827 !important; border:1px solid #1f2937 !important; color:#e5e7eb !important; border-radius:10px; padding:10px 12px; }
+            .coolTabs .searchPanel .button.sr { width:100%; background:#2563eb !important; border:0 !important; color:#fff !important; border-radius:10px; padding:10px 14px; white-space:nowrap; }
+            .audiosDiv { background:transparent !important; }
+            .infContainer { background:transparent !important; }
+            /* Flat rows */
+            .infObj { background:transparent !important; border-bottom:1px solid rgba(255,255,255,0.06); padding:10px 0; margin:0; }
+            .infObj:last-child { border-bottom:0; }
+            .litePlayer { background:transparent !important; }
+            .litePlayer .audioEntry { display:grid; grid-template-columns:36px 36px 1fr auto auto auto; gap:10px; align-items:center; }
+            .litePlayer .playButton { width:36px; height:36px; border-radius:18px; background:#111827; border:1px solid #334155; }
+            .litePlayer .coverPh img { background:#111827; border:1px solid #334155; border-radius:6px; }
+            .litePlayer .audioInfo .performer, .litePlayer .audioInfo .name { color:#e5e7eb !important; }
+            .litePlayer .audioButtons { display:flex; align-items:center; }
+            .litePlayer .audioButtons .add-icon, .litePlayer .audioButtons .del-icon { filter: brightness(0.9); transform: scale(0.9); }
+            .litePlayer .moreBtn { color:#cbd5e1; font-size:22px; line-height:1; padding:0 6px; cursor:pointer; }
+            .litePlayer .length { min-width:44px; text-align:right; }
+            .litePlayer .length .lengthText { color:#94a3b8; }
+            .litePlayer .tracks { margin-top:6px; }
+            .litePlayer .lengthTrack { height:2px; }
+            .litePlayer .volumeTrack { display:none; }
+            .litePlayer .selectableTrack { background:#111827; border-radius:999px; overflow:hidden; height:2px; }
+            .litePlayer .selectableTrack .usedPart { background:#2563eb; height:2px; }
+            /* Mini bottom audio player */
+            #mini-audio { position:fixed; left:8px; right:8px; bottom:64px; z-index:10000; background:#111827; border:1px solid #334155; border-radius:14px; padding:10px 12px; display:none; align-items:center; gap:10px; color:#e5e7eb; }
+            #mini-audio .cover { width:36px; height:36px; border-radius:8px; background:#0f172a; display:inline-flex; align-items:center; justify-content:center; border:1px solid #334155; }
+            #mini-audio .title { flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+            #mini-audio .ctrl { width:36px; height:36px; border-radius:18px; background:#0f172a; border:1px solid #334155; display:inline-flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; }
+        </style>
+    </head>
+
+
+    <body class="app_layer"> 
+    
+    <div class="app">
+        {if false}
+        <div class="navigation">
+            <div class="headername">
+                <div class="ovk_mobile_logo"></div>
+                <div class="head_now">{include title}</div>
+                {ifset $thisUser}
+                    <a href="/im" class="ovk_mobile_mail_icon" onClick="event.stopPropagation();">{if $thisUser->getUnreadMessagesCount() > 0}<b>{$thisUser->getUnreadMessagesCount()}</b>{/if}</a>
+                    <div class="search_menu_box" style="" onClick="event.stopPropagation();">
+                        <form action="/search" method="get">
+                            <input type="search" name="q" placeholder="{_header_search}" style="padding-left: 18px;" accesskey="f">
+                        </form>
+                    </div>
+
+        
+                {else}
+                    <div class="search_menu_box"></div>
+                {/ifset}
+            </div>
+        </div>
+        {/if}
+
+       
+
+        <div class="menuovk">
+            {ifset $thisUser}
+
+                       
+            <a href="{$thisUser->getURL()}" class="menuprlink">
+                <div class="menunameava">
+                 <div class="profile_menu_arrow"></div>
+                    <table class="pr_ovk_page">
+                        <tr>
+                            <td rowspan="2">
+                                <img class="ava" src="{$thisUser->getAvatarURL()}" />
+                            </td> <!-- Ава -->
+
+                            <td rowspan="2">
+                                <div class="name">{$thisUser->getFullName()}</div>
+                                <div class="status">{$thisUser->getStatus()}</div>
+                            </td> <!-- Имя -->
+                        </tr>
+                    </table>
+                </div>
+            </a>
+
+
+
+            <div class="content">
+                <ul class="menu">
+                    <li class="element prmenu">
+                        <a href="/friends{$thisUser->getId()}">
+                            <div class="mobile_icons" id="fr">{_mobile_friends}
+                            {var $followers = $thisUser->getRequestsCount()}
+                                {if $followers > 0}
+                            <span class="counter urgent">{$followers}</span>
+                            {/if}</div>
+                        </a>
+                    </li>
+                    <li class="element prmenu">
+                        <a n:if="$thisUser->getLeftMenuItemStatus('photos')" href="/albums{$thisUser->getId()}"><div class="mobile_icons" id="ph">{_mobile_photos} </div></a>
+                    </li>
+                    <li class="element prmenu">
+                        <a n:if="$thisUser->getLeftMenuItemStatus('audios')" href="/audios/home"><div class="mobile_icons" id="audeeo">{_mobile_audios} </div></a>
+                    </li>
+                    <li class="element prmenu">
+                        <a n:if="$thisUser->getLeftMenuItemStatus('videos')" href="/videos{$thisUser->getId()}"><div class="mobile_icons" id="video">{_mobile_videos} </div></a>
+                    </li>
+                    <li class="element prmenu">
+                        <a n:if="$thisUser->getLeftMenuItemStatus('docs')" href="/docs"><div class="mobile_icons" id="notfg">{_documents} </div></a>
+                    </li>
+                    <li class="element prmenu">
+                        <a n:if="$thisUser->getLeftMenuItemStatus('messages')" href="/im">
+                            <div class="mobile_icons" id="mail">{_mobile_messages}
+                                {if $thisUser->getUnreadMessagesCount() > 0}
+                            <span class="counter urgent">{$thisUser->getUnreadMessagesCount()}</span>
+                            {/if}</div>
+                        </a>
+                    </li>
+                    <li class="element prmenu">
+                        <a n:if="$thisUser->getLeftMenuItemStatus('news')" href="/feed"><div class="mobile_icons" id="news">{_feed} </div></a>
+                    </li>
+                    <li class="element prmenu">
+                        <a href="/notifications">
+                            <div class="mobile_icons" id="feedback">{_feedback}
+                                {if $thisUser->getNotificationsCount() > 0}
+                            <span class="counter urgent">{$thisUser->getNotificationsCount()}</span>
+                            {/if}</div>
+                        </a>
+                    </li>
+                    <li class="element prmenu">
+                        <a n:if="$thisUser->getLeftMenuItemStatus('groups')" href="/groups{$thisUser->getId()}"> <div class="mobile_icons" id="grp">{_mobile_groups} </div></a>
+                    </li>
+                    <li class="element prmenu">
+                        <a href="/fave"> <div class="mobile_icons" id="faveicon">{_bookmarks_tab} </div></a>
+                    </li>
+                    <li class="element prmenu">
+                        <a href="/search"> <div class="mobile_icons" id="search">{_mobile_search} </div></a>
+                    </li>
+                </ul>
+
+            {var $canAccessAdminPanel = $thisUser->getChandlerUser()->can("access")->model("admin")->whichBelongsTo(NULL)}
+            {var $canAccessHelpdesk   = $thisUser->getChandlerUser()->can("write")->model('openvk\Web\Models\Entities\TicketReply')->whichBelongsTo(0)}
+            {if $canAccessAdminPanel || $canAccessHelpdesk}
+                <div class="space_menu"></div>
+                <ul class="menu">
+                    <li class="element prmenu gray" n:if="$canAccessAdminPanel">
+                        <a href="/admin"><div class="mobile_icons" id="settings">{_admin}</div></a>
+                    </li>
+                    <li class="element prmenu gray" n:if="$canAccessHelpdesk">
+                        <a href="/support/tickets"><div class="mobile_icons" id="hlp">{_menu_support}
+                        {if $helpdeskTicketNotAnsweredCount > 0}
+                            <span class="counter urgent">{$helpdeskTicketNotAnsweredCount}</span>
+                            {/if}
+
+                        </div></a>
+                    </li>
+                </ul>
+            {/if}
+
+            <div class="space_menu"></div>
+
+                <ul class="menu">
+                    <li class="element prmenu gray">
+                        <a href="/settings"> <div class="mobile_icons" id="settings">{_mobile_settings} </div></a>
+                    </li>
+                    <li class="element prmenu gray">
+                        <a href="/support"> <div class="mobile_icons" id="hlp">{_menu_help}
+                        
+                         {if $ticketAnsweredCount > 0}
+                            <span class="counter urgent">{$ticketAnsweredCount}</span>
+                            {/if}
+
+                        </div></a>
+                    </li>
+                    <li class="element prmenu gray">
+                        <a href="/settings/reset_theme?hash={urlencode($csrfToken)}"><div class="mobile_icons" id="full">{_mobile_desktop_version}</div></a>
+                    </li>
+                    <li class="element prmenu gray">
+                        <a href="/logout?hash={urlencode($csrfToken)}"> <div class="mobile_icons" id="exit">{_mobile_log_out}</div></a>
+                    </li>
+                </ul>
+                {if $thisUser->getPinnedClubCount() > 0}
+                    <div class="space_menu"></div>
+                    <ul class="menu">
+                        <li n:foreach="$thisUser->getPinnedClubs() as $club" class="element prmenu gray">
+                            <a href="{$club->getURL()}"><div class="mobile_icons" id="fr">{ovk_proc_strtr($club->getName(), 14)}</div></a>
+                        </li>
+                    </ul>
+                {/if}
+            </div>
+
+
+            {else}
+            <div class="content">
+                <ul class="menu">
+                    <li class="element prmenu">
+                        <a href="/">{_home}</a>
+                    </li>
+                    <li class="element prmenu">
+                        <a href="/login">{_log_in}</a>
+                    </li>
+                    <li class="element prmenu">
+                        <a href="/reg">{_registration}</a>
+                    </li>
+                </ul>
+            </div>
+            {/ifset}
+        <div class="space_menu"></div>
+            <div id="page_footer">
+                {var dbVersion = \Chandler\Database\DatabaseConnection::i()->getConnection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION)}
+                
+                <p>OpenVK <a href="/about:openvk2">{php echo OPENVK_VERSION}</a> | PHP: {phpversion()} | DB: {$dbVersion}</p>
+                <p n:ifcontent>
+                    {php echo OPENVK_ROOT_CONF["openvk"]["appearance"]["motd"]}
+                </p>
+
+                <div class="navigation_footer">
+                <a href="/about" class="link">{_footer_about_instance}</a>
+                <a href="/blog" class="link">{_footer_blog}</a>
+                <a href="/support" class="link">{_footer_help}</a>
+                <a href="/dev" target="_blank" class="link">{_footer_developers}</a>
+                <a href="/privacy" class="link">{_footer_privacy}</a>
+                <a href="/terms" class="link">{_footer_rules}</a>
+                <a href="/language" class="link">change language</a>
+            </div>
+            </div>
+
+        </div>
+
+        <div class="main">
+            <div n:if="isset($thisUser) && $userTainted" class="alert warn">
+                <b class="head">Подмена пользователя активна</b>
+                Вы вошли как
+                <b>{$thisUser->getCanonicalName()}</b>
+                . Пожалуйста, уважайте
+                право на тайну переписки других людей и не злоупотребляйте подменой пользователя.
+                Нажмите
+                <a href="/setSID/unset?hash={rawurlencode($csrfToken)}">здесь</a>
+                , чтобы выйти.
+            </div>
+            {ifset $flashMessage}
+            <div class="alert {$flashMessage->type}">
+                <b class="head">{$flashMessage->title}</b>
+                {$flashMessage->msg|noescape}
+            </div>
+            {/ifset}
+
+            {ifset titleHeader}
+            <div class="contentWraplegend">
+                <span>{include titleHeader}</span>
+            </div>
+            {/ifset}
+
+            {ifset titleHeaderphoto}
+            <div class="contentWraplegend photo">
+                <span>{include titleHeaderphoto}</span>
+            </div>
+            {/ifset}
+            
+            {include body}
+
+        </div></div>
+        <!-- Mobile top app bar -->
+        <div id="mobile-appbar" n:if="$thisUser != null" style="position:fixed;top:0;left:0;right:0;z-index:9997;background:#0b1220;color:#e5e7eb;padding:12px 16px env(safe-area-inset-right) 16px;display:flex;align-items:center;gap:10px;">
+            <a href="/" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;">
+                <img alt="logo" src="/themepack/mobile_ovk/0.0.1.0/resource/logo.png" width="24" height="24" style="display:block;"/>
+            </a>
+            <div id="mobile-appbar-title" style="font-size:18px;font-weight:700;">&nbsp;</div>
+        </div>
+        <!-- Services bottom sheet overlay -->
+        <div id="mobile-services-overlay" class="services-backdrop" n:ifset="$thisUser">
+            <div class="services-sheet" style="margin:0 auto;max-width:860px;">
+                <!-- Header row -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                        <div style="font-weight:700;">{_mobile_services}</div>
+                        <button id="services-close-btn" type="button" style="background:#111827;border:1px solid #334155;color:#cbd5e1;border-radius:10px;padding:6px 10px;">{_close}</button>
+                    </div>
+                <!-- Account card -->
+                <a href="{$thisUser->getURL()}" style="display:flex;align-items:center;gap:12px;background:#111827;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px 12px;color:#e5e7eb;text-decoration:none;margin-bottom:12px;">
+                    <img src="{$thisUser->getAvatarURL()}" alt="ava" width="44" height="44" style="display:block;border-radius:10px;object-fit:cover;"/>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$thisUser->getFullName()}</div>
+                        <div style="opacity:.75;font-size:12px;">{_go_to_profile}</div>
+                    </div>
+                    <div style="opacity:.5;">›</div>
+                </a>
+                <!-- Grid -->
+                <div id="services-grid">
+                        <a href="/friends{$thisUser->getId()}" class="svc" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#0b1324;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;color:#e5e7eb;text-decoration:none;">
+                            <img src="/themepack/mobile_ovk/0.0.1.0/resource/icons/users.svg" width="28" height="28" alt=""/>
+                            <div style="font-size:13px;opacity:.9;">{_mobile_friends}</div>
+                        </a>
+                        <a href="/groups{$thisUser->getId()}" class="svc" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#0b1324;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;color:#e5e7eb;text-decoration:none;">
+                            <img src="/themepack/mobile_ovk/0.0.1.0/resource/icons/groups.svg" width="28" height="28" alt=""/>
+                            <div style="font-size:13px;opacity:.9;">{_mobile_groups}</div>
+                        </a>
+                        <a href="/albums{$thisUser->getId()}" class="svc" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#0b1324;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;color:#e5e7eb;text-decoration:none;">
+                            <img src="/themepack/mobile_ovk/0.0.1.0/resource/icons/photos.svg" width="28" height="28" alt=""/>
+                            <div style="font-size:13px;opacity:.9;">{_mobile_photos}</div>
+                        </a>
+                        <a href="/videos{$thisUser->getId()}" class="svc" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#0b1324;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;color:#e5e7eb;text-decoration:none;">
+                            <img src="/themepack/mobile_ovk/0.0.1.0/resource/icons/video.svg" width="28" height="28" alt=""/>
+                            <div style="font-size:13px;opacity:.9;">{_mobile_video}</div>
+                        </a>
+                        <a href="/audios/home" class="svc" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#0b1324;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;color:#e5e7eb;text-decoration:none;">
+                            <img src="/themepack/mobile_ovk/0.0.1.0/resource/icons/music.svg" width="28" height="28" alt=""/>
+                            <div style="font-size:13px;opacity:.9;">{_mobile_audios}</div>
+                        </a>
+                        <a href="/fave" class="svc" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#0b1324;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;color:#e5e7eb;text-decoration:none;">
+                            <img src="/themepack/mobile_ovk/0.0.1.0/resource/icons/bookmark.svg" width="28" height="28" alt=""/>
+                            <div style="font-size:13px;opacity:.9;">{_bookmarks}</div>
+                        </a>
+                        <a href="/settings" class="svc" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#0b1324;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;color:#e5e7eb;text-decoration:none;">
+                            <img src="/themepack/mobile_ovk/0.0.1.0/resource/icons/gear.svg" width="28" height="28" alt=""/>
+                            <div style="font-size:13px;opacity:.9;">{_mobile_settings}</div>
+                        </a>
+                        <a href="/logout?hash={urlencode($csrfToken)}" class="svc" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:#7f1d1d;border:1px solid rgba(239,68,68,0.6);border-radius:12px;padding:12px;color:#fff;text-decoration:none;">
+                            <img src="/themepack/mobile_ovk/0.0.1.0/resource/icons/power.svg" width="28" height="28" alt=""/>
+                            <div style="font-size:13px;opacity:.95;">{_mobile_log_out}</div>
+                        </a>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile tabbar -->
+        <nav id="mobile-tabbar" n:if="$thisUser != null" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#0b1220;border-top:1px solid rgba(255,255,255,0.06);padding:6px env(safe-area-inset-right) calc(6px + env(safe-area-inset-bottom)) env(safe-area-inset-left);">
+            <div style="display:flex;justify-content:space-between;gap:6px;max-width:820px;margin:0 auto;">
+                <a href="/feed" class="tab-item" style="flex:1;text-align:center;color:#cbd5e1;text-decoration:none;padding:6px 4px;">
+                    <img alt="home" src="/themepack/mobile_ovk/0.0.1.0/resource/icons/home.svg" width="24" height="24" style="display:block;margin:0 auto 2px;opacity:.9;"/>
+                    <div style="font-size:12px;">{_feed}</div>
+                </a>
+                <a href="/videos{ifset $thisUser}{$thisUser->getId()}{/ifset}" class="tab-item" style="flex:1;text-align:center;color:#cbd5e1;text-decoration:none;padding:6px 4px;">
+                    <img alt="video" src="/themepack/mobile_ovk/0.0.1.0/resource/icons/video.svg" width="24" height="24" style="display:block;margin:0 auto 2px;opacity:.9;"/>
+                    <div style="font-size:12px;">{_mobile_video}</div>
+                </a>
+                <a href="/im" class="tab-item" style="flex:1;text-align:center;color:#cbd5e1;text-decoration:none;padding:6px 4px;position:relative;">
+                    <img alt="messenger" src="/themepack/mobile_ovk/0.0.1.0/resource/icons/messenger.svg" width="24" height="24" style="display:block;margin:0 auto 2px;opacity:.9;"/>
+                    <div style="font-size:12px;">{_mobile_messages}</div>
+                    {ifset $thisUser}{if $thisUser->getUnreadMessagesCount() > 0}
+                        <span style="position:absolute;right:22px;top:0;background:#ef4444;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;line-height:18px;min-width:18px;">{$thisUser->getUnreadMessagesCount()}</span>
+                    {/if}{/ifset}
+                </a>
+                <a href="/notifications" class="tab-item" style="flex:1;text-align:center;color:#cbd5e1;text-decoration:none;padding:6px 4px;">
+                    <img alt="bell" src="/themepack/mobile_ovk/0.0.1.0/resource/icons/bell.svg" width="24" height="24" style="display:block;margin:0 auto 2px;opacity:.9;"/>
+                    <div style="font-size:12px;">{_mobile_notifications}</div>
+                </a>
+                <button id="tab-services" class="tab-item" type="button" style="flex:1;text-align:center;color:#cbd5e1;text-decoration:none;padding:6px 4px;background:transparent;border:0;">
+                    <img alt="more" src="/themepack/mobile_ovk/0.0.1.0/resource/icons/more.svg" width="24" height="24" style="display:block;margin:0 auto 2px;opacity:.9;"/>
+                    <div style="font-size:12px;">{_mobile_more}</div>
+                </button>
+            </div>
+        </nav>
+        <!-- Mobile mini audio player -->
+        <div id="mobile-audio-mini" style="position:fixed;left:0;right:0;bottom:calc(54px + env(safe-area-inset-bottom));z-index:10001;">
+            <div style="max-width:820px;margin:0 auto;padding:6px 10px;">
+                <button id="mobile-audio-mini-btn" type="button" style="display:flex;gap:10px;align-items:center;width:100%;background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:8px 10px;color:#e5e7eb;touch-action:pan-y;">
+                    <div style="position:relative;flex:0 0 40px;width:40px;height:40px;border-radius:8px;overflow:hidden;background:#111827;">
+                        <img id="ma_cover" src="/themepack/mobile_ovk/0.0.1.0/resource/icons/note.svg" alt="cover" width="40" height="40" style="display:block;width:40px;height:40px;object-fit:cover;"/>
+                        <div id="ma_play" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;">▶</div>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div id="ma_title" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+                        <div id="ma_artist" style="opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+                        <div style="margin-top:4px;height:3px;background:#1f2937;border-radius:99px;overflow:hidden;">
+                            <div id="ma_progress" style="width:0%;height:100%;background:#2563eb;"></div>
+                        </div>
+                    </div>
+                    <div id="ma_dismiss" title="hide" style="flex:0 0 28px;width:28px;height:28px;border-radius:8px;background:#111827;display:flex;align-items:center;justify-content:center;margin-left:6px;">✕</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile full-screen audio player overlay -->
+        <div id="mobile-audio-full" style="position:fixed;left:0;right:0;top:0;bottom:calc(56px + env(safe-area-inset-bottom));z-index:10000;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);display:none;">
+            <div style="padding:16px;display:flex;flex-direction:column;min-height:100%;color:#e5e7eb;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <button id="maf_close" type="button" style="background:#111827;border:1px solid #334155;color:#cbd5e1;border-radius:10px;padding:8px 10px;">Закрыть</button>
+                    <div style="opacity:.7;font-size:13px;">Плеер</div>
+                    <div style="width:82px"></div>
+                </div>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:16px 0;">
+                    <div style="width:min(78vw,420px);">
+                        <div style="border-radius:16px;overflow:hidden;background:#111827;">
+                            <img id="maf_cover" src="/themepack/mobile_ovk/0.0.1.0/resource/icons/note.svg" alt="cover" style="display:block;width:100%;height:auto;object-fit:cover;"/>
+                        </div>
+                        <div style="margin-top:14px;">
+                            <div id="maf_title" style="font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+                            <div id="maf_artist" style="color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+                        </div>
+                        <div style="margin-top:14px;">
+                            <input id="maf_seek" type="range" min="0" max="1000" value="0" style="width:100%;appearance:none;height:4px;border-radius:99px;background:#1f2937;outline:none;"/>
+                            <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:12px;margin-top:6px;">
+                                <span id="maf_cur">00:00</span>
+                                <span id="maf_dur">00:00</span>
+                            </div>
+                        </div>
+                        <div style="display:flex;justify-content:center;gap:14px;margin-top:16px;">
+                            <button id="maf_prev" type="button" style="background:#111827;border:1px solid #334155;color:#cbd5e1;border-radius:999px;width:44px;height:44px;">⏮</button>
+                            <button id="maf_play" type="button" style="background:#2563eb;border:0;color:#fff;border-radius:999px;width:64px;height:64px;font-size:18px;">▶</button>
+                            <button id="maf_next" type="button" style="background:#111827;border:1px solid #334155;color:#cbd5e1;border-radius:999px;width:44px;height:44px;">⏭</button>
+                        </div>
+            </div>
+        </div>
+
+        <!-- Mobile top app bar -->
+        <div id="mobile-appbar" n:if="$thisUser != null" style="position:fixed;top:0;left:0;right:0;z-index:9997;background:#0b1220;color:#e5e7eb;padding:12px 16px env(safe-area-inset-right) 16px;display:flex;align-items:center;gap:10px;">
+            <a href="/" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;">
+                <img alt="logo" src="/themepack/mobile_ovk/0.0.1.0/resource/logo.png" width="24" height="24" style="display:block;"/>
+            </a>
+            <div id="mobile-appbar-title" style="font-size:18px;font-weight:700;">&nbsp;</div>
+        </div>
+        {ifset $thisUser}
+
+        
+        <script>
+        (function(){
+            try{
+                var open = document.getElementById('tab-services');
+                var ovl  = document.getElementById('mobile-services-overlay');
+                var cls  = document.getElementById('services-close-btn');
+                if(open && ovl){ open.addEventListener('click', function(e){ e.preventDefault(); ovl.classList.add('open'); var sh=ovl.querySelector('.services-sheet'); if(sh){ sh.style.transform='translateY(0)'; } }); }
+                if(cls && ovl){ cls.addEventListener('click', function(e){ e.preventDefault(); ovl.classList.remove('open'); var sh=ovl.querySelector('.services-sheet'); if(sh){ sh.style.transform='translateY(100%)'; } }); }
+                if(ovl){ ovl.addEventListener('click', function(e){ if(e.target === ovl){ ovl.classList.remove('open'); var sh=ovl.querySelector('.services-sheet'); if(sh){ sh.style.transform='translateY(100%)'; } } }); }
+                // prevent content being hidden under tabbar and appbar
+                var ap = document.getElementById('mobile-appbar');
+                var tb = document.getElementById('mobile-tabbar');
+                var app = document.querySelector('.app');
+                if(ap && tb && app){ app.style.paddingTop = (ap.clientHeight + 6) + 'px'; app.style.paddingBottom = (tb.clientHeight + 6) + 'px'; }
+                // Always show appbar/tabbar; padding already set above
+                // highlight active tab
+                var path = location.pathname;
+                var loggedIn = !!document.querySelector('meta[name="csrf"]');
+                if (/^\/(login|reg|register|restore)/.test(path) || (!loggedIn && (path==='/' || /^\/about(\b|\/|$)/.test(path)))) {
+                    if(tb) tb.style.display = 'none';
+                    if(ap) ap.style.display = 'none';
+                    if(app){ app.style.paddingBottom = '0px'; app.style.paddingTop = '0px'; }
+                }
+                var tabs = document.querySelectorAll('#mobile-tabbar .tab-item');
+                tabs.forEach(function(a){ a.classList.remove('active'); });
+                function mark(sel){ var el = document.querySelector(sel); if(el) el.style.color = '#fff'; }
+                if(path.startsWith('/feed')) mark('#mobile-tabbar a[href="/feed"]');
+                else if(path.startsWith('/videos')) mark('#mobile-tabbar a[href^="/videos"]');
+                else if(path.startsWith('/im')) mark('#mobile-tabbar a[href="/im"]');
+                else if(path.startsWith('/notifications')) mark('#mobile-tabbar a[href="/notifications"]');
+
+                // Disabled confirmation overlay for /im links in mobile theme
+            }catch(_){ }
+        })();
+        </script>
+        <script>
+        (function(){
+          var mini = document.getElementById('mini-audio');
+          var btn  = document.getElementById('mini-audio-pp');
+          var curAudio = null;
+          function updateFromAudio(a){
+            try{
+              var lp = a.closest('.litePlayer');
+              var performer = lp && lp.querySelector('.performer') ? lp.querySelector('.performer').textContent.trim() : '';
+              var title = lp && lp.querySelector('.name') ? lp.querySelector('.name').textContent.trim() : '';
+              var t = (performer ? performer + ' — ' : '') + title;
+              mini.querySelector('.title').textContent = t || 'Аудио';
+              mini.style.display = 'flex';
+              if(btn) btn.textContent = a.paused ? '▶' : '⏸';
+            }catch(_){ mini.style.display='flex'; }
+          }
+          // Global audio events (capture) to catch any audio tag
+          window.addEventListener('play', function(e){
+            var a = e.target;
+            if(a && a.tagName === 'AUDIO'){
+              curAudio = a; updateFromAudio(a);
+            }
+          }, true);
+          window.addEventListener('pause', function(e){ if(e.target===curAudio && btn){ btn.textContent='▶'; } }, true);
+          window.addEventListener('ended', function(e){ if(e.target===curAudio){ mini.style.display='none'; curAudio=null; } }, true);
+          if(btn){ btn.addEventListener('click', function(){ if(curAudio){ if(curAudio.paused){ curAudio.play(); btn.textContent='⏸'; } else { curAudio.pause(); btn.textContent='▶'; } } }); }
+        })();
+        </script>
+        <!-- Mini audio player -->
+        <div id="mini-audio">
+            <div class="cover">🎵</div>
+            <div class="title">—</div>
+            <button type="button" class="ctrl" id="mini-audio-pp">▶</button>
+        </div>
+        <script defer src="/themepack/mobile_ovk/0.0.1.0/resource/mobile_audios.js?rnd=50"></script>
+        {script "js/messagebox.js"}
+        {script "js/al_comments.js"}
+        
+        <script id='_js_ep_script'>
+            window.openvk = {
+                "audio_genres": {\openvk\Web\Models\Entities\Audio::genres},
+                "at_search": {$atSearch ?? false},
+                "max_attachments": {\OPENVK_ROOT_CONF["openvk"]["preferences"]["wall"]["postSizes"]["maxAttachments"] ?? 10},
+                "max_filesize_mb": 5,
+                "current_id": {$thisUser ? $thisUser->getId() : 0},
+                "disable_ajax": {$disable_ajax ? $disable_ajax : 0},
+            }
+        </script>
+        {/ifset}
+    </body>
+</html>{if isset($parentModule) && substr($parentModule, 0, 21) !== 'libchandler:absolute.'}<!-- INCLUDING TEMPLATE FROM PARENTMODULE: {$parentModule} -->
+
+    
+    {include body}
+{/if}

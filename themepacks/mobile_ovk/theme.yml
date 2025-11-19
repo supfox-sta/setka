@@ -1,0 +1,31 @@
+id: mobile_ovk
+version: "0.0.1.0"
+openvk_version: 0
+enabled: 1
+
+override_templates: true
+inherits_master: false
+
+metadata:
+    name:
+        _: "Setka Mobile"
+        en: "Setka Mobile"
+        ru: "Setka Mobile"
+        ru_lat: "Setka Mobile"
+        ru_old: "Setka Mobile"
+        ru_sov: "Setka Mobile"
+        by: "Setka Mobile"
+        by_lat: "Setka Mobile"
+        de: "Setka Mobile"
+        eo: "Setka Mobile"
+        hy: "Setka Mobile"
+        id: "Setka Mobile"
+        kk: "Setka Mobile"
+        pl: "Setka Mobile"
+        sr_lat: "Setka Mobile"
+        sr_cyr: "Setka Mobile"
+        tr: "Setka Mobile"
+        udm: "Setka Mobile"
+        uk: "Setka Mobile"
+    author: "Kozlik"
+    description: "Official mobile theme for Setka"

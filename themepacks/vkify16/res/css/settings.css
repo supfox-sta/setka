@@ -1,0 +1,218 @@
+.form_group {
+    margin: 0 20px;
+}
+
+.form_field {
+    margin-left: auto;
+    margin-right: auto;
+    width: 465px;
+    min-height: 27px;
+    display: flex;
+}
+.wide_column_wrap .form_field {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+}
+
+.form_field:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.form_label {
+    color: var(--muted-text-color-2);
+    width: 145px;
+    padding: 3px 0 0;
+    line-height: 18px;
+}
+
+.form_data {
+    margin: 0 0 0 15px;
+    flex: 1;
+    line-height: 27px;
+}
+.form_field:last-child .form_data {
+    margin-bottom: 0;
+}
+
+.form_field .form_label {
+    display: inline;
+}
+
+.form_separator {
+	margin: 12px 0 15px;
+	background: var(--border-color);
+	height: 1px;
+}
+
+.form_separator.no_padding {
+    margin: 0;
+}
+
+.settings_block_msg {
+    padding: 13px 20px 15px;
+    border-bottom: 1px solid var(--border-color);
+    line-height: 150%;
+}
+
+.page_block_footer {
+    border-top: 1px solid var(--border-color);
+    background: var(--module-header-background-color);
+    line-height: 140%;
+    padding: 15px 0 17px;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+    text-align: center;
+}
+
+.form_field input:not([type="submit"], [type="checkbox"], [type="radio"]),.form_field:not(.settings_privacy_row) select,.form_field textarea {
+    width: 300px;
+}
+
+.form_field label.checkbox {
+    display: flex;
+    width: fit-content;
+    margin-bottom: 0;
+}
+
+.form_field label.checkbox {
+    display: block;
+}
+
+.form_field #filename:not(:empty) {
+    margin-top: 10px;
+}
+
+/* privacy */
+.form_field.settings_privacy_row {
+    border-bottom: solid var(--border-color);
+    border-width: 1px 0;
+    padding: 14px 0 15px;
+    margin: -1px 0 0;
+}
+
+.settings_privacy_row:first-child {
+    border-top: none
+}
+
+.settings_privacy_row:last-child {
+    border-bottom: none
+}
+
+.settings_privacy_row.setting_row_selected.setting_row_animated {
+    background-color: transparent;
+    border-color: transparent
+}
+
+.settings_privacy_row.settings_privacy_row_oneline .form_label {
+    padding: 11px 10px 0 0
+}
+
+[dir=rtl] .settings_privacy_row.settings_privacy_row_oneline .form_label {
+    padding: 11px 0 0 10px
+}
+
+.settings_privacy_row--no-bottom-border {
+    border-bottom-width: 0
+}
+
+.settings_privacy_row .form_label {
+    width: 245px;
+    text-align: left;
+}
+
+.settings_row_button_wrap {
+    padding-left: 155px;
+    margin: 15px 0 25px 0;
+}
+
+.settings_save_footer {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.form_field .accent-box {
+    margin: 0 auto;
+}
+
+/* payments */
+
+.settings_padding {
+    padding-block: 20px
+}
+
+.voucher_form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.voucher_form .settings_voucher_input {
+    margin-right: 10px;
+}
+
+.delete_reason_list {
+    margin: 10px 0 20px;
+}
+
+/* edit page */
+.label_end .form_label {
+    text-align:end;
+}
+
+/* followers */
+.group_l_row {
+	position: relative;
+	padding: 15px 0;
+}
+.group_l_row:not(:last-child) {
+	border-bottom: 1px solid var(--border-color);
+}
+.group_u_bigph_wrap {
+	position: relative;
+	overflow: hidden;
+	width: 80px;
+	height: 80px;
+	float: left;
+	margin-right: 12px;
+}
+.group_u_photo_img {
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	overflow: hidden;
+}
+.group_u_actions {
+	float: right;
+	padding-top: 9px;
+}
+.group_u_info {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding-top: 9px;
+}
+.group_u_desc, .group_u_btns_text {
+	padding-top: 6px;
+	color: var(--muted-text-color);
+}
+.group_u_info_row {
+	padding-top: 7px;
+}
+
+.game_edit {
+    width: fit-content;
+    margin: 0 auto;
+}
+
+/* vertical */
+.form_group.vertical .form_field,.form_field.vertical {
+    flex-direction: column;
+    width: 100%;
+}
+.vertical .form_label {
+    width: 100%;
+    padding: 0 0 6px;
+}
+.vertical .form_data {
+    line-height: 18px;
+    margin-left: 0;
+}

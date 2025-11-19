@@ -1,0 +1,588 @@
+{extends "@layout.xml"}
+{var $search = $mode === "audios"}
+
+{block title}
+    {_audios}
+{/block}
+
+{block heading}
+    {_audios}
+{/block}
+
+{block searchTitle}
+    {include title}
+{/block}
+
+{block content}
+    <nav class="aui-navgroup aui-navgroup-horizontal">
+        <div class="aui-navgroup-inner">
+            <div class="aui-navgroup-primary">
+                <ul class="aui-nav">
+                    <li n:attr="class => $mode === 'audios' ? 'aui-nav-selected' : ''">
+                        <a href="?act=audios">{_audios}</a>
+                    </li>
+                    <li n:attr="class => $mode === 'playlists' ? 'aui-nav-selected' : ''">
+                        <a href="?act=playlists">{_playlists}</a>
+                    </li>
+                    <li n:attr="class => $mode === 'moderation' ? 'aui-nav-selected' : ''">
+                        <a href="?act=moderation">Модерация треков</a>
+                    </li>
+                    <li n:attr="class => $mode === 'artist_requests' ? 'aui-nav-selected' : ''">
+                        <a href="?act=artist_requests">Заявки исполнителей</a>
+                    </li>
+                    <li n:attr="class => ($mode === 'artists' || $mode === 'artist') ? 'aui-nav-selected' : ''">
+                        <a href="?act=artists">Исполнители</a>
+                    </li>
+                </ul>
+            </div>
+    <div n:if="$mode === 'artist' && $id > 0" class="content_block" style="margin-top:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+        <section class="content_item" style="flex:1;min-width:320px;">
+            <h3>Запросы на привязку</h3>
+            <table class="aui aui-table-list">
+                <thead>
+                    <tr>
+                        <th style="width:80px;">ID</th>
+                        <th>Трек</th>
+                        <th>Пользователь</th>
+                        <th style="width:220px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr n:if="sizeof($linkRequests) == 0">
+                        <td colspan="4" style="opacity:.7;">Нет запросов</td>
+                    </tr>
+                    <tr n:foreach="$linkRequests as $req">
+                        <td>{$req->id}</td>
+                        <td>
+                            <a href="/audio{$req->audio_id}_{$id}" target="_blank">Аудио {$req->audio_id}</a>
+                        </td>
+                        <td>
+                            <a href="/id{$req->user_id}" target="_blank">id{$req->user_id}</a>
+                        </td>
+                        <td>
+                            <form method="post" action="/admin/music?act=artist&id={$id}" style="display:inline-block;">
+                                <input type="hidden" name="hash" value="{$csrfToken}" />
+                                <input type="hidden" name="act" value="approve_request" />
+                                <input type="hidden" name="request_id" value="{$req->id}" />
+                                <button type="submit" class="aui-button aui-button-primary">Одобрить</button>
+                            </form>
+                            <form method="post" action="/admin/music?act=artist&id={$id}" style="display:inline-block;margin-left:6px;">
+                                <input type="hidden" name="hash" value="{$csrfToken}" />
+                                <input type="hidden" name="act" value="reject_request" />
+                                <input type="hidden" name="request_id" value="{$req->id}" />
+                                <button type="submit" class="aui-button aui-button-warning">Отклонить</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="content_item" style="flex:1;min-width:320px;">
+            <h3>Алиасы</h3>
+            <form method="post" action="/admin/music?act=artist&id={$id}" class="aui" style="margin-bottom:10px;">
+                <input type="hidden" name="hash" value="{$csrfToken}" />
+                <input type="hidden" name="act" value="add_alias" />
+                <div class="field-group">
+                    <label for="alias">Новый алиас</label>
+                    <input class="text medium-field" type="text" id="alias" name="alias" placeholder="Например: The Beatles" />
+                </div>
+                <div class="buttons-container">
+                    <div class="buttons">
+                        <input class="button submit" type="submit" value="Добавить">
+                    </div>
+                </div>
+            </form>
+            <table class="aui aui-table-list">
+                <thead>
+                    <tr>
+                        <th style="width:80px;">ID</th>
+                        <th>Алиас</th>
+                        <th style="width:120px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr n:if="sizeof($aliases) == 0">
+                        <td colspan="3" style="opacity:.7;">Нет алиасов</td>
+                    </tr>
+                    <tr n:foreach="$aliases as $al">
+                        <td>{$al->id}</td>
+                        <td>{$al->alias}</td>
+                        <td>
+                            <form method="post" action="/admin/music?act=artist&id={$id}" style="display:inline-block;">
+                                <input type="hidden" name="hash" value="{$csrfToken}" />
+                                <input type="hidden" name="act" value="remove_alias" />
+                                <input type="hidden" name="alias_id" value="{$al->id}" />
+                                <button type="submit" class="aui-button aui-button-warning">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+    <div n:if="$mode === 'artist' && $id > 0" class="content_block" style="margin-top:16px;">
+        <h3>Привязанные треки</h3>
+        <div style="opacity:.75;margin-bottom:6px;">Всего: {=count($artistTracks ?? [])}</div>
+        <table class="aui aui-table-list">
+            <thead>
+                <tr>
+                    <th style="width:80px;">ID</th>
+                    <th>Исполнитель</th>
+                    <th>Название</th>
+                    <th style="width:260px;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr n:if="sizeof($artistTracks ?? []) == 0">
+                    <td colspan="4" style="opacity:.7;">Нет треков</td>
+                </tr>
+                <tr n:foreach="$artistTracks as $audio">
+                    <td>{$audio->getId()}</td>
+                    <td>{$audio->getPerformer()}</td>
+                    <td>{$audio->getTitle()}</td>
+                    <td>
+                        <a class="aui-button" href="/audio{$audio->getOwner()->getId()}_{$audio->getId()}" target="_blank">Открыть</a>
+                        <a class="aui-button aui-button-primary" href="/admin/music/{$audio->getId()}/edit">Редактировать</a>
+                        <form method="post" action="/admin/music?act=artist&id={$id}" style="display:inline-block;margin-left:6px;">
+                            <input type="hidden" name="hash" value="{$csrfToken}" />
+                            <input type="hidden" name="act" value="detach_track" />
+                            <input type="hidden" name="audio_id" value="{$audio->getId()}" />
+                            <button type="submit" class="aui-button aui-button-warning">Отвязать</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+        </div>
+    </nav>
+
+    {if $mode === "audios"}
+    <table class="aui aui-table-list">
+            {var $audios  = iterator_to_array($audios)}
+            {var $amount = sizeof($audios)}
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>{_admin_author}</th>
+                    <th>{_peformer}</th>
+                    <th>{_admin_title}</th>
+                    <th>{_genre}</th>
+                    <th>Explicit</th>
+                    <th>{_withdrawn}</th>
+                    <th>{_deleted}</th>
+                    <th>{_created}</th>
+                    <th>{_actions}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr n:foreach="$audios as $audio">
+                    <td>{$audio->getId()}</td>
+                    <td>
+                        {var $owner = $audio->getOwner()}
+                        <span class="aui-avatar aui-avatar-xsmall">
+                            <span class="aui-avatar-inner">
+                                <img src="{$owner->getAvatarUrl('miniscule')}" alt="{$owner->getCanonicalName()}" style="object-fit: cover;" role="presentation" />
+                            </span>
+                        </span>
+
+                        <a href="{$owner->getURL()}">{$owner->getCanonicalName()}</a>
+
+                        <span n:if="$owner->isBanned()" class="aui-lozenge aui-lozenge-subtle aui-lozenge-removed">{_admin_banned}</span>
+                    </td>
+                    <td>{$audio->getPerformer()}</td>
+                    <td>{$audio->getTitle()}</td>
+                    <td>{$audio->getGenre()}</td>
+                    <td>{$audio->isExplicit() ? tr("yes") : tr("no")}</td>
+                    <td n:attr="style => $audio->isWithdrawn() ? 'color: red;' : ''">
+                        {$audio->isWithdrawn() ? tr("yes") : tr("no")}
+                    </td>
+                    <td n:attr="style => $audio->isDeleted() ? 'color: red;' : ''">
+                        {$audio->isDeleted() ? tr("yes") : tr("no")}
+                    </td>
+                    <td>{$audio->getPublicationTime()}</td>
+                    <td>
+                        <a class="aui-button aui-button-primary" href="/admin/music/{$audio->getId()}/edit">
+                            <span class="aui-icon aui-icon-small aui-iconfont-new-edit">Редактировать</span>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+    </table>
+    <br/>
+    <div align="right">
+        {var $isLast = ((10 * (($_GET['p'] ?? 1) - 1)) + $amount) < $count}
+
+        <a n:if="($_GET['p'] ?? 1) > 1" class="aui-button" href="/admin/music?act={($_GET['act'] ?? 'audios')}&p={($_GET['p'] ?? 1) - 1}">&laquo;</a>
+        <a n:if="$isLast" class="aui-button" href="/admin/music?act={($_GET['act'] ?? 'audios')}&p={($_GET['p'] ?? 1) + 1}">&raquo;</a>
+    </div>
+    {elseif $mode === "playlists"}
+    <table class="aui aui-table-list">
+            {var $playlists  = iterator_to_array($playlists)}
+            {var $amount     = sizeof($playlists)}
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>{_admin_author}</th>
+                    <th>{_name}</th>
+                    <th>{_created_playlist}</th>
+                    <th>{_actions}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr n:foreach="$playlists as $playlist">
+                    <td>{$playlist->getId()}</td>
+                    <td>
+                        {var $owner = $playlist->getOwner()}
+                        <span class="aui-avatar aui-avatar-xsmall">
+                            <span class="aui-avatar-inner">
+                                <img src="{$owner->getAvatarUrl('miniscule')}" alt="{$owner->getCanonicalName()}" style="object-fit: cover;" role="presentation" />
+                            </span>
+                        </span>
+
+                        <a href="{$owner->getURL()}">{$owner->getCanonicalName()}</a>
+
+                        <span n:if="$owner->isBanned()" class="aui-lozenge aui-lozenge-subtle aui-lozenge-removed">{_admin_banned}</span>
+                    </td>
+                    <td>
+                        <span class="aui-avatar aui-avatar-xsmall">
+                            <span class="aui-avatar-inner">
+                                <img src="{$playlist->getCoverURL()}" alt="{$owner->getCanonicalName()}" style="object-fit: cover;" role="presentation" />
+                            </span>
+                        </span>
+                        {ovk_proc_strtr($playlist->getName(), 30)}
+                    </td>
+                    <td>{$playlist->getCreationTime()}</td>
+                    <td>
+                        <a class="aui-button aui-button-primary" href="/admin/playlist/{$playlist->getId()}/edit">
+                            <span class="aui-icon aui-icon-small aui-iconfont-new-edit">{_edit}</span>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+    </table>
+    <br/>
+    <div align="right">
+        {var $isLast = ((10 * (($_GET['p'] ?? 1) - 1)) + $amount) < $count}
+        <a n:if="($_GET['p'] ?? 1) > 1" class="aui-button" href="/admin/music?act={($_GET['act'] ?? 'playlists')}&p={($_GET['p'] ?? 1) - 1}">&laquo;</a>
+        <a n:if="$isLast" class="aui-button" href="/admin/music?act={($_GET['act'] ?? 'playlists')}&p={($_GET['p'] ?? 1) + 1}">&raquo;</a>
+    </div>
+    {elseif $mode === "artists"}
+    <div class="adminHeader" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+        <form method="get" action="/admin/music" style="display:flex;gap:8px;align-items:center;">
+            <input type="hidden" name="act" value="artists" />
+            <input type="text" name="q" value="{$q}" placeholder="Поиск по имени" />
+            <button type="submit">Искать</button>
+        </form>
+        <div>
+            <a href="/admin/music?act=artist&id=0" class="aui-button aui-button-primary">Создать исполнителя</a>
+        </div>
+    </div>
+
+    <table class="aui aui-table-list">
+        <thead>
+            <tr>
+                <th style="width:80px;">ID</th>
+                <th>Имя</th>
+                <th style="width:220px;">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr n:foreach="$artists as $row">
+                <td>{$row->id}</td>
+                <td>{$row->name}</td>
+                <td>
+                    <a class="aui-button" href="/artist{$row->id}" target="_blank">Открыть</a>
+                    <a class="aui-button aui-button-primary" href="/admin/music?act=artist&id={$row->id}">Редактировать</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    {elseif $mode === "artist"}
+    <div class="content_block" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+        <div class="content_item" style="flex:0 0 320px;min-width:280px;">
+            <section class="aui-page-panel">
+                <div class="aui-page-panel-inner">
+                    <div class="aui-page-panel-content">
+                        <div style="display:flex;gap:12px;align-items:center;">
+                            <span class="aui-avatar aui-avatar-project aui-avatar-xlarge">
+                                <span class="aui-avatar-inner">
+                                    <img n:if="$artistAvatarUrl" src="{$artistAvatarUrl}" alt="avatar" style="object-fit:cover;" />
+                                </span>
+                            </span>
+                            <div>
+                                <div style="font-weight:700;font-size:18px;">{$artist ? $artist->name : 'Новый исполнитель'}</div>
+                                <div style="opacity:.8;">{$tracksCount} треков{if $albumsCount > 0} • {$albumsCount} альбомов{/if}</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:10px;opacity:.85;" n:if="$artist && $artist->bio">{$artist->bio}</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <form method="post" action="/admin/music?act=artist&id={$id}" enctype="multipart/form-data" class="content_item aui" style="flex:1;min-width:320px;">
+            <input type="hidden" name="act" value="save" />
+            <input type="hidden" name="hash" value="{$csrfToken}" />
+            <div class="field-group">
+                <label for="name">Имя</label>
+                <input class="text medium-field" type="text" id="name" name="name" value="{$artist ? $artist->name : ''}" required />
+            </div>
+            <div class="field-group">
+                <label for="bio">Описание</label>
+                <textarea class="textarea" id="bio" name="bio" rows="4">{$artist ? $artist->bio : ''}</textarea>
+            </div>
+            <div class="field-group">
+                <label for="avatar_id">ID фото (avatar_photo_id)</label>
+                <input class="text medium-field" type="number" id="avatar_id" name="avatar_photo_id" value="{$artist && $artist->avatar_photo_id ? $artist->avatar_photo_id : ''}" />
+            </div>
+            <div class="field-group">
+                <label for="avatar_file">Загрузить аватар</label>
+                <input class="file" type="file" id="avatar_file" name="avatar" accept="image/*" />
+            </div>
+            <div class="buttons-container">
+                <div class="buttons">
+                    <input class="button submit" type="submit" value="Сохранить">
+                    {if $id > 0}<a class="aui-button" href="/artist{$id}" target="_blank">Открыть публичную</a>{/if}
+                </div>
+            </div>
+        </form>
+
+        {if $id > 0}
+        <form method="post" action="/admin/music?act=artist&id={$id}" class="content_item" style="flex:1;min-width:280px;">
+            <input type="hidden" name="act" value="attach_tracks" />
+            <input type="hidden" name="hash" value="{$csrfToken}" />
+            <div class="form_row">
+                <label>ID треков (через запятую/пробел)</label>
+                <textarea name="audio_ids" rows="4" placeholder="например: 123, 124 125"></textarea>
+            </div>
+            <div class="form_row">
+                <button type="submit" class="aui-button">Привязать треки</button>
+            </div>
+        </form>
+        <form method="post" action="/admin/music?act=artist&id={$id}" class="content_item" style="flex:1;min-width:280px;">
+            <input type="hidden" name="act" value="attach_album" />
+            <input type="hidden" name="hash" value="{$csrfToken}" />
+            <div class="form_row">
+                <label>ID плейлиста (будет создан альбом у артиста)</label>
+                <input class="text" type="number" name="playlist_id" placeholder="например: 42" />
+            </div>
+            <div class="form_row">
+                <button type="submit" class="aui-button aui-button-primary">Добавить альбом</button>
+            </div>
+        </form>
+        {/if}
+
+        <section class="content_item" style="flex:1;min-width:320px;">
+            <h3>Участники артиста</h3>
+            <form method="post" action="/admin/music?act=artist&id={$id}" class="aui" style="margin-bottom:10px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <input type="hidden" name="hash" value="{$csrfToken}" />
+                <input type="hidden" name="act" value="add_member" />
+                <div class="field-group">
+                    <label for="member_user_id">ID пользователя</label>
+                    <input class="text" type="number" id="member_user_id" name="member_user_id" min="1" required />
+                </div>
+                <div class="field-group">
+                    <label for="member_role">Роль</label>
+                    <select class="select" id="member_role" name="member_role">
+                        <option value="editor">Редактор</option>
+                        <option value="owner">Владелец</option>
+                    </select>
+                </div>
+                <div class="buttons-container"><div class="buttons">
+                    <button type="submit" class="aui-button aui-button-primary">Добавить</button>
+                </div></div>
+            </form>
+            <table class="aui aui-table-list">
+                <thead>
+                    <tr>
+                        <th style="width:80px;">RowID</th>
+                        <th>UserID</th>
+                        <th>Роль</th>
+                        <th style="width:240px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr n:if="sizeof($members ?? []) == 0"><td colspan="4" style="opacity:.7;">Нет участников</td></tr>
+                    <tr n:foreach="$members as $m">
+                        <td>{$m->id}</td>
+                        <td><a href="/id{$m->user_id}" target="_blank">id{$m->user_id}</a></td>
+                        <td>
+                            <form method="post" action="/admin/music?act=artist&id={$id}" style="display:inline-flex;gap:6px;align-items:center;">
+                                <input type="hidden" name="hash" value="{$csrfToken}" />
+                                <input type="hidden" name="act" value="update_member_role" />
+                                <input type="hidden" name="member_id" value="{$m->id}" />
+                                <select class="select" name="member_role">
+                                    <option value="editor" n:attr="selected => $m->role == 'editor'">Редактор</option>
+                                    <option value="owner" n:attr="selected => $m->role == 'owner'">Владелец</option>
+                                </select>
+                                <button type="submit" class="aui-button">Сохранить</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" action="/admin/music?act=artist&id={$id}" style="display:inline-block;">
+                                <input type="hidden" name="hash" value="{$csrfToken}" />
+                                <input type="hidden" name="act" value="remove_member" />
+                                <input type="hidden" name="member_id" value="{$m->id}" />
+                                <button type="submit" class="aui-button aui-button-warning">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+ {elseif $mode === "artist_requests"}
+    <div class="aui-page-panel aui-page-panel-blank-slate">
+        <div class="aui-page-panel-inner">
+            <section class="aui-page-panel-content">
+                {var $artistTickets = $artistTickets ?? []}
+                {var $page = $page ?? 1}
+                {var $q = $q ?? ''}
+                <div style="margin-bottom:6px;opacity:.75;">Всего в выборке: {$count ?? 0}. На странице: {=count($artistTickets)}.
+                    <span n:if="count($artistTickets) > 0" style="margin-left:8px;opacity:.6;">IDs: {foreach $artistTickets as $it}{$it->id}{sep}, {/sep}{/foreach}</span>
+                </div>
+                <form method="get" action="/admin/music" class="aui" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
+                    <input type="hidden" name="act" value="artist_requests" />
+                    <input class="text" type="text" name="q" n:attr="value => $q" placeholder="Поиск по тексту заявки" />
+                    <button type="submit" class="button">Искать</button>
+                </form>
+                <table class="aui aui-table-list">
+                    <thead>
+                        <tr>
+                           <th style="width:80px;">ID</th>
+                           <th>Автор</th>
+                           <th>Название</th>
+                           <th>Текст</th>
+                           <th style="width:220px;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr n:if="count($artistTickets) == 0">
+                            <td colspan="5" style="opacity:.7;">Заявок нет</td>
+                        </tr>
+                        <tr n:foreach="$artistTickets as $t">
+                            <td>{$t->id}</td>
+                            <td><a href="/id{$t->user_id}" target="_blank">id{$t->user_id}</a></td>
+                            <td>{$t->name}</td>
+                            <td><div style="max-width:480px;white-space:pre-wrap;">{$t->text}</div></td>
+                            <td>
+                                <form method="post" action="/admin/music?act=artist_requests&p={$page}&q={$q}" style="display:inline-block;">
+                                    <input type="hidden" name="hash" value="{$csrfToken}" />
+                                    <input type="hidden" name="act" value="approve_artist_request" />
+                                    <input type="hidden" name="ticket_id" value="{$t->id}" />
+                                    <button type="submit" class="aui-button aui-button-primary">Одобрить</button>
+                                </form>
+                                <form method="post" action="/admin/music?act=artist_requests&p={$page}&q={$q}" style="display:inline-block;margin-left:6px;">
+                                    <input type="hidden" name="hash" value="{$csrfToken}" />
+                                    <input type="hidden" name="act" value="reject_artist_request" />
+                                    <input type="hidden" name="ticket_id" value="{$t->id}" />
+                                    <button type="submit" class="aui-button aui-button-warning">Отклонить</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                {include "../components/paginator.xml", conf => (object) [
+                    "page"     => $page ?? 1,
+                    "count"    => $count ?? 0,
+                    "amount"   => count($artistTickets),
+                    "perPage"  => 25,
+                    "atBottom" => true,
+                ]}
+            </section>
+        </div>
+    </div>
+
+    {if $mode === "moderation"}
+    <div class="aui-page-panel aui-page-panel-blank-slate">
+        <div class="aui-page-panel-inner">
+            <section class="aui-page-panel-content">
+                <form method="get" action="/admin/music" class="aui" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
+                    <input type="hidden" name="act" value="moderation" />
+                    <input class="text" type="text" name="q" n:attr="value => $q" placeholder="Поиск по исполнителю/названию" />
+                    <button type="submit" class="button">Искать</button>
+                </form>
+                <table class="aui aui-table-list">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Исполнитель — Название</th>
+                            <th>Создан</th>
+                            <th style="width:220px;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr n:if="sizeof($pendingAudios) == 0">
+                            <td colspan="4" style="opacity:.7;">Очередь пуста</td>
+                        </tr>
+                        <tr n:foreach="$pendingAudios as $a">
+                            <td>{$a->id}</td>
+                            <td><a href="/audio{$a->owner}_{$a->virtual_id}" target="_blank">{$a->performer} — {$a->name}</a></td>
+                            <td>{=date('d.m.Y H:i', $a->created)}</td>
+                            <td>
+                                <form method="post" action="/admin/music?act=moderation&p={$page}&q={$q}" style="display:inline-block;">
+                                    <input type="hidden" name="hash" value="{$csrfToken}" />
+                                    <input type="hidden" name="act" value="approve_audio" />
+                                    <input type="hidden" name="audio_id" value="{$a->id}" />
+                                    <button type="submit" class="aui-button aui-button-primary">Одобрить</button>
+                                </form>
+                                <form method="post" action="/admin/music?act=moderation&p={$page}&q={$q}" style="display:inline-block;margin-left:6px;">
+                                    <input type="hidden" name="hash" value="{$csrfToken}" />
+                                    <input type="hidden" name="act" value="reject_audio" />
+                                    <input type="hidden" name="audio_id" value="{$a->id}" />
+                                    <button type="submit" class="aui-button aui-button-warning">Отклонить</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                {include "../components/paginator.xml", conf => (object) [
+                    "page"     => $page ?? 1,
+                    "count"    => $count ?? 0,
+                    "amount"   => sizeof($pendingAudios ?? []),
+                    "perPage"  => 25,
+                    "atBottom" => true,
+                ]}
+            </section>
+        </div>
+    </div>
+    {/if}
+    </div>
+    <div n:if="$mode === 'artist' && $id > 0" class="content_block" style="margin-top:16px;">
+        <h3>Привязанные треки</h3>
+        <div style="opacity:.75;margin-bottom:6px;">Всего: {=count($artistTracks ?? [])}</div>
+        <table class="aui aui-table-list">
+            <thead>
+                <tr>
+                    <th style="width:80px;">ID</th>
+                    <th>Исполнитель</th>
+                    <th>Название</th>
+                    <th style="width:260px;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr n:if="sizeof($artistTracks) == 0">
+                    <td colspan="4" style="opacity:.7;">Нет треков</td>
+                </tr>
+                <tr n:foreach="$artistTracks as $audio">
+                    <td>{$audio->getId()}</td>
+                    <td>{$audio->getPerformer()}</td>
+                    <td>{$audio->getTitle()}</td>
+                    <td>
+                        <a class="aui-button" href="/audio{$audio->getOwner()->getId()}_{$audio->getId()}" target="_blank">Открыть</a>
+                        <a class="aui-button aui-button-primary" href="/admin/music/{$audio->getId()}/edit">Редактировать</a>
+                        <form method="post" action="/admin/music?act=artist&id={$id}" style="display:inline-block;margin-left:6px;">
+                            <input type="hidden" name="hash" value="{$csrfToken}" />
+                            <input type="hidden" name="act" value="detach_track" />
+                            <input type="hidden" name="audio_id" value="{$audio->getId()}" />
+                            <button type="submit" class="aui-button aui-button-warning">Отвязать</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {/if}
+{/block}

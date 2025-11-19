@@ -1,0 +1,42 @@
+{extends "../@layout.xml"}
+
+{block title}
+    {$artist->getName()} — Альбомы
+{/block}
+
+{block header}
+    {$artist->getName()}
+{/block}
+
+{block content}
+    <div class="artistPage" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+        <section style="flex:0 0 260px;min-width:240px;">
+            <div style="width:220px;height:220px;border-radius:12px;overflow:hidden;background:#f2f2f2;">
+                <img n:if="$artistAvatarUrl" n:attr="src => $artistAvatarUrl, alt => $artist->getName()" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            </div>
+        </section>
+
+        <section style="flex:1;min-width:320px;">
+            <div style="font-size:22px;font-weight:700;">{$artist->getName()}</div>
+            <div class="audioTabs" style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;">
+                <a href="/artist{$artist->getId()}" id="ki" style="text-decoration:none;">Главная</a>
+                <a href="/artist{$artist->getId()}/tracks" id="ki" style="text-decoration:none;">Все треки ({$tracksCount})</a>
+                <a href="/artist{$artist->getId()}/albums" id="used" style="text-decoration:none;">Альбомы ({$albumsCount})</a>
+            </div>
+            <div style="margin:4px 0 6px;opacity:.85;">{$tracksCount} треков{if $albumsCount > 0} • {$albumsCount} альбомов{/if}</div>
+
+            <div class="audiosDiv">
+                <div class="audiosPaddingContainer audiosSideContainer audiosPaddingContainer" style="width: 100%;">
+                    <div n:if="sizeof($albums) <= 0" style='height: 100%;'>
+                        {include "../components/content_error.xml", description => "Нет альбомов"}
+                    </div>
+                    <div class="scroll_container playlistContainer" n:if="sizeof($albums) > 0">
+                        <div class='scroll_node' n:foreach='$albums as $playlist'>
+                            {include '../Audio/playlistListView.xml', playlist => $playlist}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+{/block}

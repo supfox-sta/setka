@@ -1,0 +1,33 @@
+{extends "../@layout.xml"}
+
+{block title}Удалить — {$page->getTitle()} — {$club->getName()}{/block}
+
+{block header}
+  Удаление страницы
+{/block}
+
+{block content}
+  <div class="clear_fix">
+    <div class="left_big_block">
+      <div class="page_block">
+        <div class="page_block_header clear_fix">
+          <div class="page_block_header_inner _header">
+            <h1 class="page_block_h1">{$page->getTitle()}</h1>
+          </div>
+        </div>
+        <div class="page_block_content">
+          <div class="msg msg_warn" style="margin-bottom:12px;">
+            Вы уверены, что хотите удалить эту страницу? Действие нельзя отменить.
+          </div>
+          <form method="post">
+            <input type="hidden" name="hash" value="{$csrfToken}" />
+            <div style="display:flex;gap:8px;">
+              <button type="submit" class="button button_primary">Удалить</button>
+              <a href="{$club->getURL()}/wiki/{$slug}" class="button">Отмена</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}

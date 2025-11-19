@@ -1,0 +1,443 @@
+{extends "../@layout.xml"}
+{block title}API: Новости{/block}
+{block header}{/block}
+{block content}
+<div style="display:block;">
+  <main style="max-width:1100px;margin:0 auto;padding:16px;">
+    <!-- Breadcrumb -->
+    <div style="margin-bottom:16px;">
+      <a href="/dev-api" style="color:#3b82f6;">← Назад к API</a>
+    </div>
+
+    <!-- Header -->
+    <div style="margin-bottom:24px;">
+      <h1 style="font-size:32px;font-weight:800;margin-bottom:8px;">Новости</h1>
+      <p style="color:#6b7280;">Методы для работы с лентой новостей, публикациями и стенами</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:24px;">
+      <!-- Main content -->
+      <div style="display:flex;flex-direction:column;gap:24px;">
+
+        <!-- wall.get -->
+        <div id="get" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">wall.get</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение записей со стены пользователя или группы.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца стены (положительный - пользователь, отрицательный - группа)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество записей (макс. 100)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение для постраничной навигации</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">filter</code>
+                <span style="color:#6b7280;margin-left:8px;">— Фильтр записей (all, owner, others)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">extended</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - вернуть дополнительную информацию</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/wall.get.json?owner_id=1&count=20&filter=all</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 150,
+  "items": [{
+    "id": 123456,
+    "owner_id": 1,
+    "from_id": 1,
+    "date": 1609459200,
+    "text": "Текст поста",
+    "attachments": [...],
+    "comments": {
+      "count": 5
+    },
+    "likes": {
+      "count": 10,
+      "user_likes": 0
+    },
+    "reposts": {
+      "count": 2,
+      "user_reposted": 0
+    }
+  }]
+}</pre>
+          </div>
+        </div>
+
+        <!-- wall.post -->
+        <div id="post" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">wall.post</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Публикация записи на стене пользователя или группы.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца стены</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">message</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— Текст записи</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">attachments</code>
+                <span style="color:#6b7280;margin-left:8px;">— Вложения (фото, видео, аудио)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">from_group</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - опубликовать от имени группы</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">signed</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - добавить подпись автора</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">publish_date</code>
+                <span style="color:#6b7280;margin-left:8px;">— Время публикации (отложенная публикация)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/wall.post.json<br/>owner_id=1&message=Привет мир!</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "post_id": 123456,
+  "wall_id": 1
+}</pre>
+          </div>
+        </div>
+
+        <!-- wall.delete -->
+        <div id="delete" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">wall.delete</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Удаление записи со стены.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца стены</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">post_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID записи</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/wall.delete.json?owner_id=1&post_id=123456</code>
+          </div>
+        </div>
+
+        <!-- wall.repost -->
+        <div id="repost" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">wall.repost</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Репост записи на стену пользователя.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">object</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— Объект для репоста (wall-1_123456)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">message</code>
+                <span style="color:#6b7280;margin-left:8px;">— Комментарий к репосту</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">group_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID группы для репоста</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/wall.repost.json?object=wall1_123456&message=Отличный пост!</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "success": 1,
+  "post_id": 123457,
+  "reposts_count": 5,
+  "likes_count": 10
+}</pre>
+          </div>
+        </div>
+
+        <!-- wall.getComments -->
+        <div id="getcomments" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">wall.getComments</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение комментариев к записи на стене.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца стены</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">post_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID записи</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество комментариев (макс. 100)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">sort</code>
+                <span style="color:#6b7280;margin-left:8px;">— Сортировка (asc, desc)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/wall.getComments.json?owner_id=1&post_id=123456&count=20</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 25,
+  "items": [{
+    "id": 789,
+    "from_id": 2,
+    "date": 1609459200,
+    "text": "Отличный пост!",
+    "likes": {
+      "count": 3
+    }
+  }],
+  "current_level_count": 25
+}</pre>
+          </div>
+        </div>
+
+        <!-- wall.createComment -->
+        <div id="createcomment" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">wall.createComment</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Добавление комментария к записи на стене.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца стены</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">post_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID записи</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">message</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— Текст комментария</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">attachments</code>
+                <span style="color:#6b7280;margin-left:8px;">— Вложения</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">reply_to_comment</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID комментария для ответа</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/wall.createComment.json<br/>owner_id=1&post_id=123456&message=Отличный пост!</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "comment_id": 789
+}</pre>
+          </div>
+        </div>
+
+        <!-- wall.pin / wall.unpin -->
+        <div id="pin" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">wall.pin / wall.unpin</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Закрепление или открепление записи на стене.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца стены</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">post_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID записи</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Примеры:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/wall.pin.json?owner_id=1&post_id=123456<br/>POST /method/wall.unpin.json?owner_id=1&post_id=123456</code>
+          </div>
+        </div>
+
+        <!-- newsfeed.get -->
+        <div id="newsfeed" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">newsfeed.get</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение ленты новостей пользователя.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество записей (макс. 100)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">start_time</code>
+                <span style="color:#6b7280;margin-left:8px;">— Время начала выборки</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">end_time</code>
+                <span style="color:#6b7280;margin-left:8px;">— Время окончания выборки</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">filters</code>
+                <span style="color:#6b7280;margin-left:8px;">— Фильтры (post, photo, video, etc.)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/newsfeed.get.json?count=50&filters=post,photo</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "items": [{
+    "type": "post",
+    "source_id": 1,
+    "date": 1609459200,
+    "post": {
+      "id": 123456,
+      "text": "Текст поста",
+      "attachments": [...]
+    }
+  }],
+  "profiles": [...],
+  "groups": [...]
+}</pre>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside style="position:sticky;top:12px;">
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;">
+          <div style="font-weight:700;margin-bottom:12px;">На этой странице</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+            <li><a href="#get" style="color:#3b82f6;font-size:14px;">wall.get</a></li>
+            <li><a href="#post" style="color:#3b82f6;font-size:14px;">wall.post</a></li>
+            <li><a href="#delete" style="color:#3b82f6;font-size:14px;">wall.delete</a></li>
+            <li><a href="#repost" style="color:#3b82f6;font-size:14px;">wall.repost</a></li>
+            <li><a href="#getcomments" style="color:#3b82f6;font-size:14px;">wall.getComments</a></li>
+            <li><a href="#createcomment" style="color:#3b82f6;font-size:14px;">wall.createComment</a></li>
+            <li><a href="#pin" style="color:#3b82f6;font-size:14px;">wall.pin/unpin</a></li>
+            <li><a href="#newsfeed" style="color:#3b82f6;font-size:14px;">newsfeed.get</a></li>
+          </ul>
+        </div>
+
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+          <div style="font-weight:700;margin-bottom:12px;">Другие разделы</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+            <li><a href="/dev-api/auth" style="color:#6b7280;font-size:14px;">Авторизация</a></li>
+            <li><a href="/dev-api/messages" style="color:#6b7280;font-size:14px;">Сообщения</a></li>
+            <li><a href="/dev-api/users" style="color:#6b7280;font-size:14px;">Пользователи</a></li>
+            <li><a href="/dev-api/groups" style="color:#6b7280;font-size:14px;">Группы</a></li>
+            <li><a href="/dev-api/photos" style="color:#6b7280;font-size:14px;">Фото</a></li>
+            <li><a href="/dev-api/audio" style="color:#6b7280;font-size:14px;">Музыка</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+  </main>
+</div>
+{/block}

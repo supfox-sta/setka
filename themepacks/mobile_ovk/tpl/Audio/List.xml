@@ -1,0 +1,211 @@
+{extends "../@layout.xml"}
+
+{block title}
+    {if $mode == 'list'}
+        {_audios}
+    {elseif $mode == 'new'}
+        {_audio_new}
+    {elseif $mode == 'popular'}
+        {_audio_popular}
+    {else}
+        {_playlists}
+    {/if}
+{/block}
+
+{block header}
+    <div n:if="$mode == 'list'">
+        <div n:if="$isMy">{_my_audios_small}</div>
+        <div n:if="!$isMy">
+            <span n:ifset="$owner">
+                <a n:attr="href => $owner->getURL()">{$owner->getCanonicalName()}</a>
+                »
+                {_audios}
+            </span>
+            <span n:if="!isset($owner)">{_audios}</span>
+        </div>
+    </div>
+
+    <div n:if="$mode == 'new'">
+        {_audios}
+        »
+        {_audio_new}
+    </div>
+
+    <div n:if="$mode == 'popular'">
+        {_audios}
+        »
+        {_audio_popular}
+    </div>
+
+    <div n:if="$mode == 'playlists'">
+        {_audios}
+        »
+        {if $isMy}{_my_playlists}{else}{_playlists}{/if}
+    </div>
+{/block}
+
+{block body}
+    <div class="coolTabs clearFix">
+        <div n:attr="id => $mode === 'home' ? activetabs : ''" class="tab">
+            <a n:attr="id => $mode === 'home' ? 'act_tab_a' : ''" href="/audios/home">Главная</a>
+        </div>
+        <div n:attr="id => $mode === 'liked' ? activetabs : ''" class="tab">
+            <a n:attr="id => $mode === 'liked' ? 'act_tab_a' : ''" href="/audios/liked">Любимое</a>
+        </div>
+        <div n:attr="id => $mode === 'playlists' ? activetabs : ''" class="tab">
+            <a n:attr="id => $mode === 'playlists' ? 'act_tab_a' : ''" href="/playlists{ifset $thisUser}{$thisUser->getId()}{/ifset}">Плейлисты</a>
+        </div>
+
+        <form class="searchPanel" action="/search" method="GET" n:if="$mode != 'playlists'">
+            <input type="text" name="q" placeholder="{_enter_a_name_or_artist}">
+            <input type="hidden" name="section" value="audios">
+            <input type="submit" class="button cfa sr" value="{_header_search}">
+        </form>
+    </div>
+
+    <!-- Mobile Music Home rich layout -->
+    <div n:if="$mode == 'home'" style="display:flex;flex-direction:column;gap:12px;padding:0 10px;">
+        <!-- Banner -->
+        <div style="width:100%;border-radius:12px;overflow:hidden;background:#111827;border:1px solid rgba(255,255,255,0.08);aspect-ratio:12/7;">
+            <img n:attr="src => $home_banner_src ?? '/assets/packages/static/openvk/img/banner_song.jpg'" alt="promo" style="width:100%;height:100%;object-fit:cover;display:block;" />
+        </div>
+
+        <!-- Albums collections -->
+        <section>
+            <h3 style="margin:8px 0;">Альбомы</h3>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+                <a n:foreach="$home_albums as $col" n:attr="href => $col['href']" style="display:block;text-decoration:none;color:inherit;">
+                    <div style="border-radius:10px;overflow:hidden;background:#111827;border:1px solid rgba(255,255,255,0.08);aspect-ratio:1/1;">
+                        <img n:attr="src => $col['cover'], alt => $col['title']" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                    </div>
+                    <div style="margin-top:6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$col['title']}</div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Genres grid -->
+        <section>
+            <h3 style="margin:8px 0;">Жанры</h3>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                <a n:foreach="$home_genres as $g" n:attr="href => $g['href']" style="display:block;text-decoration:none;color:inherit;">
+                    <div style="border-radius:10px;overflow:hidden;background:#111827;border:1px solid rgba(255,255,255,0.08);aspect-ratio:1/1;">
+                        <img n:attr="src => $g['cover'], alt => $g['title']" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                    </div>
+                    <div style="margin-top:6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$g['title']}</div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Artists grid -->
+        <section>
+            <h3 style="margin:8px 0;">Исполнители</h3>
+            <div n:if="isset($home_artists) && sizeof($home_artists) > 0" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+                <a n:foreach="$home_artists as $a" n:attr="href => '/artist' . $a['id']" style="display:flex;flex-direction:column;gap:8px;text-decoration:none;color:#e5e7eb;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:#0b1324;font-weight:700;">
+                    {var $av = (isset($a['avatar']) && $a['avatar']) ? $a['avatar'] : '/themepack/mobile_ovk/0.0.1.0/resource/icons/user.svg'}
+                    <div style="width:100%;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:#111827;">
+                        <img n:attr="src => $av, alt => $a['name']" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                    </div>
+                    <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$a['name']}</div>
+                    <div style="opacity:.9;font-weight:600;">{isset($a['tracks']) ? $a['tracks'] : 0} треков • {isset($a['albums']) ? $a['albums'] : 0} альбомов</div>
+                </a>
+            </div>
+            <div n:if="!isset($home_artists) || sizeof($home_artists) == 0" style="opacity:.7;">Исполнителей пока нет.</div>
+        </section>
+
+        <!-- Favourite albums scroll -->
+        <section>
+            <h3 style="margin:8px 0;">Любимые альбомы</h3>
+            <div n:if="isset($home_fav_albums) && sizeof($home_fav_albums) > 0" class="scroll_container playlistContainer">
+                <div class='scroll_node' n:foreach='$home_fav_albums as $playlist'>
+                    {include "playlistListView.xml", playlist => $playlist}
+                </div>
+            </div>
+            <div n:if="!isset($home_fav_albums) || sizeof($home_fav_albums) == 0" style="opacity:.7;">Пока нет любимых альбомов.</div>
+        </section>
+
+        <!-- Actions -->
+        <section>
+            <h3 style="margin:8px 0;">Действия</h3>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                <a n:foreach="$home_actions as $act" n:if="$act['title'] !== 'Открыть кабинет' && $act['title'] !== 'Старый интерфейс'" n:attr="href => $act['href']" style="display:block;text-decoration:none;color:inherit;">
+                    <div style="border-radius:10px;overflow:hidden;background:#111827;border:1px solid rgba(255,255,255,0.08);aspect-ratio:1/1;">
+                        <img n:attr="src => $act['cover'], alt => $act['title']" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                    </div>
+                    <div style="margin-top:6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$act['title']}</div>
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <div class="audiosDiv" n:if="$mode != 'home'">
+        <div n:if="$mode == 'liked'">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+                <a class="button cfa sr" href="/player/upload">{_upload_audio}</a>
+            </div>
+            <div>
+                <h3 style="margin:8px 0;">Понравившиеся плейлисты</h3>
+                <div n:if="isset($liked_playlists) && sizeof($liked_playlists) > 0" class="scroll_container playlistContainer">
+                    <div class='scroll_node' n:foreach='$liked_playlists as $playlist'>
+                        {include 'playlistListView.xml', playlist => $playlist}
+                    </div>
+                </div>
+                <div n:if="!isset($liked_playlists) || sizeof($liked_playlists) == 0" style="opacity:.7;">Плейлисты ещё не отмечены.</div>
+            </div>
+            <div>
+                <h3 style="margin:8px 0;">Понравившиеся треки</h3>
+                <div n:if="isset($liked_audios) && sizeof($liked_audios) > 0" class="infContainer">
+                    <div class="infObj" n:foreach="$liked_audios as $audio">
+                        {include "player.xml", audio => $audio, club => $club}
+                    </div>
+                </div>
+                <div n:if="!isset($liked_audios) || sizeof($liked_audios) == 0" style="opacity:.7;">Треки ещё не отмечены.</div>
+            </div>
+            <div style="padding-bottom: 88px;"></div>
+        </div>
+        <div n:if="$mode != 'playlists' && $mode != 'liked'">
+            {if $audiosCount > 0}
+                <div class="infContainer">
+                    <div class="infObj" n:foreach="$audios as $audio">
+                        {include "player.xml", audio => $audio, club => $club}
+                    </div>
+                </div>
+
+                <div style="padding-bottom: 88px;">
+                    {include "../components/paginator.xml", conf => (object) [
+                        "page"     => $page,
+                        "count"    => $audiosCount,
+                        "amount"   => sizeof($audios),
+                        "perPage"  => $perPage ?? OPENVK_DEFAULT_PER_PAGE,
+                        "atBottom" => true,
+                    ]}
+                </div>
+            {else}
+                {include "../components/error.xml", description => $ownerId > 0 ? ($ownerId == $thisUser->getId() ? tr("no_audios_thisuser") : tr("no_audios_user")) : tr("no_audios_club")}
+            {/if}
+        </div>
+
+        <div n:if="$mode == 'playlists'">
+            <a href="/audios/newPlaylist">
+                <input type="button" class="button cfa sr" value="{_new_playlist}">
+            </a>
+
+            {if $playlistsCount > 0}
+                {foreach $playlists as $playlist}
+                    {include "../Audio/playlistListView.xml", playlist => $playlist}
+                {/foreach}
+
+                <div style="padding-bottom: 88px;">
+                    {include "../components/paginator.xml", conf => (object) [
+                        "page"     => $page,
+                        "count"    => $playlistsCount,
+                        "amount"   => sizeof($playlists),
+                        "perPage"  => $perPage ?? OPENVK_DEFAULT_PER_PAGE,
+                        "atBottom" => true,
+                    ]}
+                </div>
+            {else}
+                {include "../components/error.xml", description => $ownerId > 0 ? ($ownerId == $thisUser->getId() ? tr("no_playlists_thisuser") : tr("no_playlists_user")) : tr("no_playlists_club")}
+            {/if}
+        </div>
+    </div>
+{/block}

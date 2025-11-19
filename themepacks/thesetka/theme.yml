@@ -1,0 +1,12 @@
+id: thesetka
+version: "0.0.0.1"
+openvk_version: 0
+enabled: 1
+metadata:
+    name:
+        _: "thesetka"
+        en: "thesetka"
+        ru: "thesetka"
+        uk: "thesetka"
+    author: "Kozlik"
+    description: "thesetka"

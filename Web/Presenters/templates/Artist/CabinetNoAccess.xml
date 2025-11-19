@@ -1,0 +1,23 @@
+{extends "../@layout.xml"}
+
+{block title}
+    Кабинет исполнителя
+{/block}
+
+{block header}
+    <a href="/audios/home">Аудиозаписи</a>
+    »
+    Кабинет исполнителя
+{/block}
+
+{block content}
+    <div class="container_gray" style="border:0;margin-top:-10px;">
+        <div class="content_block">
+            <h3>Нет доступа</h3>
+            <p style="opacity:.85;">У этого пользователя нет доступа ни к одному артисту.</p>
+            <div class="buttons-container"><div class="buttons">
+                <a class="button" href="/artists/become">Подать заявку</a>
+            </div></div>
+        </div>
+    </div>
+{/block}

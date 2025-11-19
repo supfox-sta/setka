@@ -1,0 +1,56 @@
+{extends "../@layout.xml"}
+
+{block title}
+    {$artist->getName()}
+{/block}
+
+{block titleHeader}
+    {$artist->getName()}
+{/block}
+
+{block body}
+    <div class="artistPage" style="padding:10px;display:flex;flex-direction:column;gap:12px;">
+        <!-- Header: avatar + name/bio to the right -->
+        <section style="display:flex;gap:12px;align-items:center;">
+            <div style="flex:0 0 72px;width:72px;height:72px;border-radius:9999px;overflow:hidden;background:#111827;border:1px solid rgba(255,255,255,0.08);">
+                <img n:if="$artistAvatarUrl" n:attr="src => $artistAvatarUrl, alt => $artist->getName()" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:18px;font-weight:700;">{$artist->getName()}</div>
+                <div style="margin-top:4px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" n:if="$artist->getBio()">{$artist->getBio()}</div>
+                <div style="margin-top:4px;opacity:.8;font-size:12px;">
+                    {var $tc = isset($tracksCount) ? $tracksCount : 0}
+                    {var $ac = isset($albumsCount) ? $albumsCount : (isset($albums) ? sizeof($albums) : 0)}
+                    {$tc} треков{if $ac > 0} • {$ac} альбомов{/if}
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs -->
+        <div class="audioTabs" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a n:attr="id => 'used'" href="/artist{$artist->getId()}" style="text-decoration:none;">Главная</a>
+            <a id="ki" href="/artist{$artist->getId()}/tracks" style="text-decoration:none;">Все треки ({isset($tracksCount) ? $tracksCount : 0})</a>
+            <a id="ki" href="/artist{$artist->getId()}/albums" style="text-decoration:none;">Альбомы ({isset($albumsCount) ? $albumsCount : (isset($albums) ? sizeof($albums) : 0)})</a>
+        </div>
+
+        <!-- Top-5 tracks -->
+        <section n:if="isset($topTracks) && sizeof($topTracks) > 0" style="display:flex;flex-direction:column;gap:6px;">
+            <h3 style="margin:6px 0;">Топ-5 треков</h3>
+            <div class="infContainer">
+                <div class="infObj" n:foreach="$topTracks as $audio">
+                    {include "../Audio/player.xml", audio => $audio}
+                </div>
+            </div>
+        </section>
+
+        <!-- Albums grid -->
+        <section n:if="isset($albums) && sizeof($albums) > 0">
+            <h3 style="margin:6px 0;">Альбомы</h3>
+            <div class="scroll_container playlistContainer">
+                <div class='scroll_node' n:foreach='$albums as $playlist'>
+                    {include '../Audio/playlistListView.xml', playlist => $playlist}
+                </div>
+            </div>
+        </section>
+    </div>
+{/block}

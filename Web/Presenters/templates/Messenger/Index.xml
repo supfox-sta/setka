@@ -1,0 +1,173 @@
+{extends "../@layout.xml"}
+{block title}{_my_messages}{/block}
+
+ 
+
+{block header}{_my_messages}{/block}
+
+{block content}
+    <div class="tabs">
+        {var $tab = (isset($_GET['tab']) ? (string)$_GET['tab'] : '')}
+        {var $groupsOnly = ($tab === 'groups')}
+        <div id="activetabs" class="tab">
+            <a id="act_tab_a" href="/im" class="{if !$groupsOnly}active{/if}">{_all_messages}</a>
+            <a id="act_tab_b" href="/im?tab=groups" class="{if $groupsOnly}active{/if}" style="margin-left:10px;">{_groups}</a>
+        </div>
+    </div>
+
+    <div class="container_gray">
+        <form action="/im/search" method="POST" style="margin: 0;">
+            <input type="text" name="pattern" placeholder="{_search_messages}" required />
+        </form>
+    </div>
+
+    {if $groupsOnly}
+        <div style="margin:10px 0;">
+        <button class="button" id="open-create-group">{_create_group}</button>
+        <div id="create-group-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:20;">
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:520px;max-width:95vw;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);">
+            <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-weight:600;">{_create_group}</div>
+              <a href="#" id="close-create-group" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+            </div>
+            <div style="padding:12px;">
+              <div style="margin-bottom:10px;">
+                <div style="margin-bottom:6px;">{_group_title}</div>
+                <input type="text" id="gc-title" style="width:100%;" />
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin:8px 0;">Добавьте участников позже через “Изменить группу”.</div>
+              <div style="text-align:right;">
+                <button class="button" id="do-create-group">{_create_group}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <script>
+          (function(){
+            var open = document.getElementById('open-create-group');
+            var close = document.getElementById('close-create-group');
+            var modal = document.getElementById('create-group-modal');
+            var doCreate = document.getElementById('do-create-group');
+            open.addEventListener('click', function(){
+              modal.style.display = 'block';
+            });
+            close.addEventListener('click', function(e){
+              e.preventDefault();
+              modal.style.display = 'none';
+            });
+            doCreate.addEventListener('click', function(){
+              var title = (document.getElementById('gc-title').value||'').trim();
+              var fd = new FormData();
+              fd.set('title', title);
+              fd.set('hash', {$csrfToken});
+              fetch('/messenger/api/create-conversation', { method:'POST', credentials:'same-origin', body: fd })
+                .then(function(r){ return r.json(); })
+                .then(function(j){ if (j.ok && j.conversation && j.conversation.id){ window.location.href = '/grp' + j.conversation.id; } });
+            });
+          })();
+        </script>
+    {/if}
+
+    <script>
+    (function(){
+        function onInvite(id){
+            try{
+                var fd = new FormData(); fd.set('conversation_id', String(id)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/invite/generate', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json())
+                  .then(j=>{
+                      if (j && j.ok) {
+                          var tok = j.token || j.invite_token;
+                          if (tok) {
+                              var link = window.location.origin + '/messenger/api/conversations/join?token=' + tok;
+                              if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(link); }
+                              alert('Ссылка скопирована:\n' + link);
+                          }
+                      }
+                  });
+            }catch(e){}
+        }
+        function onEdit(id){ window.location.href = '/grp' + id; }
+        function onLeave(id, btn){
+            try{
+                if (!confirm('Выйти из группы #' + id + '?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(id)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/leave', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json())
+                  .then(j=>{
+                      if (j && j.ok) {
+                          var root = btn.closest('.crp-entry');
+                          if (root) root.parentNode.removeChild(root);
+                      } else if (j && j.error) { alert(j.error); }
+                  });
+            }catch(e){}
+        }
+        document.addEventListener('click', function(e){
+            var t = e.target;
+            if (t && t.classList.contains('btn-invite')) { onInvite(t.getAttribute('data-id')); }
+            else if (t && t.classList.contains('btn-edit')) { onEdit(t.getAttribute('data-id')); }
+            else if (t && t.classList.contains('btn-leave')) { onLeave(t.getAttribute('data-id'), t); }
+        }, true);
+    })();
+    </script>
+
+    {if $groupsOnly && isset($groups)}
+        <div class="crp-list scroll_container">
+            <div n:foreach="$groups as $g" class="scroll_node crp-entry" data-group-id="{$g['id']}" onmousedown="window.location.assign('/grp' + {$g['id']});">
+                <div class="crp-entry--image">
+                    <img n:if="isset($g['avatar_url']) && $g['avatar_url']" src="{$g['avatar_url']}" alt="Group" loading=lazy />
+                    <img n:if="!isset($g['avatar_url']) || !$g['avatar_url']" src="/assets/packages/static/openvk/img/dialog_group.png" alt="Group" loading=lazy />
+                </div>
+                <div class="crp-entry--info">
+                    <a href="{'/grp' . $g['id']}">{$g['title'] ?: ('ID ' . $g['id'])}</a><br/>
+                </div>
+                <div class="crp-entry--message">
+                    <div class="crp-entry--message---text">{$g['last'] ?? tr('no_messages')}</div>
+                </div>
+                <div class="crp-entry--actions" style="display:flex;gap:6px;margin-left:auto;">
+                    <button class="button btn-invite" type="button" onclick="event.stopPropagation();" data-id="{$g['id']}">Пригласить</button>
+                    <button class="button btn-edit" type="button" onclick="event.stopPropagation();" data-id="{$g['id']}">Изменить</button>
+                    <button class="button btn-leave" type="button" onclick="event.stopPropagation();" data-id="{$g['id']}" style="background:#ef4444;border-color:#ef4444;">Выйти</button>
+                </div>
+            </div>
+        </div>
+    {elseif sizeof($corresps) > 0}
+        <div class="crp-list scroll_container">
+            <div n:foreach="$corresps as $coresp"
+                 class="scroll_node crp-entry"
+                 n:if="!$groupsOnly || (count($coresp->getCorrespondents()) >= 2)"
+                 onmousedown="window.location.assign({$coresp->getURL()});" >
+                {var $recipient = $coresp->getCorrespondents()[1]}
+                {var $lastMsg   = $coresp->getPreviewMessage()}
+
+                <div class="crp-entry--image">
+                    <img src="{$recipient->getAvatarURL('miniscule')}"
+                    alt="Фотография пользователя" loading=lazy />
+                </div>
+                <div class="crp-entry--info">
+                    <a href="{$recipient->getURL()}">{$recipient->getCanonicalName()}</a><br/>
+                    <span>{$lastMsg->getSendTimeHumanized()}</span>
+                </div>
+                <div n:class="crp-entry--message, $lastMsg->getUnreadState() ? unread">
+                    {var $_author = $lastMsg->getSender()}
+
+                    <div class="crp-entry--message---av" n:if="$_author->getId() === $thisUser->getId()">
+                        <img src="{$_author->getAvatarURL('miniscule')}"
+                        alt="Фотография пользователя" />
+                    </div>
+                    <div class="crp-entry--message---text">
+                        {$lastMsg->getText()|noescape}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 3px;">
+            {include "../components/paginator.xml", conf => $paginatorConf}
+        </div>
+		<script src="/custom_groupchat/public/groupchat.js"></script>
+    {else}
+        <br/>
+        <br/>
+        <center>{_no_messages}</center>
+    {/if}
+{/block}

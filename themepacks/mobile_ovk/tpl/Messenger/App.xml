@@ -1,0 +1,1309 @@
+{extends "../@layout.xml"}
+{block title}{if isset($convId) && $convId}{$groupTitle}{else}{$correspondent->getCanonicalName()}{/if}{/block}
+
+{block header}
+    {if isset($convId) && $convId}
+        <div id="im-header" style="display:flex;align-items:center;gap:10px;">
+            <a href="/im" class="button" style="padding:6px 10px;border-radius:10px;">←</a>
+            <img id="group_avatar_img" src="{isset($groupAvatarUrl) && $groupAvatarUrl ? $groupAvatarUrl : '/assets/packages/static/openvk/img/dialog_group.png'}" alt="Group" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;" />
+            <span id="group_title_span" style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$groupTitle}</span>
+            <span style="margin-left:auto; display:inline-flex; gap:6px;">
+                <button class="button" id="open-group-settings" data-bind="visible: canOwner(), click: function(){ $root.openSettings(); }">{_edit_group}</button>
+                <button class="button" id="leave-group" data-bind="visible: (myRole && myRole() !== 'owner'), click: function(){ $root.leaveConversation(); }">{_leave_group}</button>
+            </span>
+        </div>
+    {else}
+        <div id="im-header" style="display:flex;align-items:center;gap:10px;">
+            <a href="/im" class="button" style="padding:6px 10px;border-radius:10px;">←</a>
+            <img src="{$correspondent->getAvatarUrl('miniscule')}" alt="{$correspondent->getCanonicalName()}" style="width:28px;height:28px;border-radius:50%;" />
+            <a href="{$correspondent->getURL()}" style="text-decoration:none;color:inherit;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$correspondent->getCanonicalName()}</a>
+            <div n:if="($online = $correspondent->getOnline()->timestamp()) + 2505600 > time()" style="margin-left:auto;opacity:.8;font-size:12px;">
+                {var $diff = date_diff(date_create(), date_create('@' . $online))}
+                {if 5 >= $diff->i}
+                    <span><b>{_online}</b></span>
+                {else}
+                    <span>{$correspondent->isFemale() ? tr("was_online_f") : tr("was_online_m")} {$correspondent->getOnline()}</span>
+                {/if}
+            </div>
+        </div>
+    {/if}
+{/block}
+
+{block body}
+    <div class="messenger-app">
+        <style>
+          /* Lock page scroll, let messages container handle scrolling */
+          html, body { height:100%; overflow:hidden; }
+          .messenger-app { position:relative; min-height:100vh; }
+          /* Messages occupy viewport between header (top) and composer+appbar (bottom) */
+          .messenger-app--messages { position:fixed; left:0; right:0; top: var(--messages-top, 56px); bottom: var(--bottom-gap, 112px); background:#0f141a; box-sizing:border-box; -webkit-overflow-scrolling: touch; overflow-y:auto; padding: 8px 0 8px; touch-action: pan-y; }
+          .messenger-app--messages---message { color:#e5e7eb; display:flex; gap:8px; align-items:flex-end; padding:6px 8px; justify-content:flex-start !important; }
+          .messenger-app--messages---message .msg-select { display:none; }
+          .messenger-app--messages---message .ava { width:32px; height:32px; border-radius:50%; object-fit:cover; flex:0 0 32px; }
+          .messenger-app--messages---message ._content { max-width:80%; margin-left:0 !important; }
+          .messenger-app--messages---message .text { display:inline-block; background:#222c37; color:#e5e7eb; padding:8px 10px; border-radius:16px; max-width:100%; word-wrap:break-word; }
+          .messenger-app--messages---message.out { justify-content:flex-start !important; }
+          .messenger-app--messages---message.out .text { background:#1976d2; color:#fff; }
+          .messenger-app--messages .reply-quote { border-left-color:#2a3648 !important; color:#9aa4b2 !important; }
+          .messenger-header { background:#0f141a; border-bottom:1px solid #1f2937; }
+          .messenger-app--input { position:fixed; bottom:calc(0px + env(safe-area-inset-bottom)); left:0; right:0; background:#0f141a; border-top:1px solid #1f2937; padding:8px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); z-index:2147483647; width:100%; }
+          .messenger-app--input---messagebox { position:relative; }
+          #attach-menu { position:absolute; bottom:56px; left:0; background:#111827; color:#e5e7eb; border:1px solid #1f2937; border-radius:10px; padding:6px; z-index:2147483647; box-shadow:0 8px 24px rgba(0,0,0,.35); }
+          #attach-menu a { color:#e5e7eb; }
+          /* Legacy iOS safe-area fallback */
+          @supports (padding: constant(safe-area-inset-bottom)) {
+            .messenger-app--input { bottom: constant(safe-area-inset-bottom); padding-bottom: calc(8px + constant(safe-area-inset-bottom)); }
+            .messenger-app--messages { padding-bottom: calc(112px + constant(safe-area-inset-bottom)); }
+          }
+          .messenger-app { position:relative; }
+          .composer-row { max-width:100%; }
+          .composer-row .icon-btn { flex:0 0 40px; }
+          .composer-row textarea { min-height:42px; max-height:120px; overflow:auto; }
+          .composer-row { display:flex; align-items:center; gap:8px; }
+          .messenger-app--input textarea { background:#1a2230; color:#e5e7eb; border:1px solid #2a3648; border-radius:18px; padding:10px 12px; width:100%; resize:none; min-height:42px; }
+          .icon-btn { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#1a2230; border:1px solid #2a3648; color:#e5e7eb; }
+          .button { background:#2a3648; color:#e5e7eb; border-color:#2a3648; }
+          .icon { width:20px; height:20px; fill:currentColor; }
+          /* Safety: hide any legacy avatar that might be injected near the composer */
+          .messenger-app--input .ava { display:none !important; }
+          /* Unified photo size in message bubbles */
+          .messenger-app--messages---message .attachments { display:flex; flex-wrap:wrap; gap:8px; max-width:100%; }
+          .messenger-app--messages---message .attachments .msg-attach-j-photo a,
+          .messenger-app--messages---message .attachments .msg-attach-j-photo img { display:block; width:160px !important; height:160px !important; }
+          .messenger-app--messages---message .attachments .msg-attach-j-photo img { object-fit:cover !important; border-radius:10px; }
+          /* Fallback for any img inside message content */
+          .messenger-app--messages---message ._content img { max-width:100%; height:auto; border-radius:10px; }
+        </style>
+        <!-- Selection action bar (yellow box) -->
+        <div style="background:#fff9c4;border:1px solid #f6e05e;border-radius:6px;padding:8px 10px;margin-bottom:8px;display:none;" data-bind="visible: hasSelection && hasSelection(), with: $root">
+            <span data-bind="text: tr('_selected_count').replace('$1', selectedCount())"></span>
+            <span style="float:right;display:inline-flex;gap:6px;">
+                <button class="button" data-bind="click: openForwardPicker">{_forward_messages}</button>
+                <button class="button" data-bind="click: deleteSelected">{_delete_messages}</button>
+                <button class="button" data-bind="click: clearSelection">{_clear_selection}</button>
+            </span>
+        </div>
+        <div class="messenger-app--messages" n:attr="data-bind => 'event: { scroll: onMessagesScroll }'">
+            <div data-bind="foreach: messages">
+                <div class="messenger-app--messages---message" n:attr="data-bind => 'css: { unread: !$data.read, out: (sender && sender.id === window.CURRENT_USER_ID) }, click: function(){ $root.openMsgActions($data); }'">
+                    <img class="ava" n:attr="data-bind => 'attr: { src: sender.avatar, alt: sender.name }'" />
+                    <div class="_content">
+                        <div data-bind="if: !$data.deleted">
+                            <a href="#" n:attr="data-bind => 'attr: { href: sender.link }'">
+                                <strong data-bind="text: sender.name"></strong>
+                            </a>
+                            <div class="reply-quote" data-bind="if: (typeof $data.reply !== 'undefined' && $data.reply)" style="border-left:2px solid #e5e7eb;padding-left:6px;margin:3px 0;color:#6b7280;font-size:12px;line-height:1.2;max-width:520px;">
+                                <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><strong data-bind="text: reply && reply.sender ? reply.sender.name : ''"></strong></div>
+                                <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: reply ? reply.text : ''"></div>
+                            </div>
+                <!-- Image viewer modal -->
+                <div data-bind="visible: $root.imageViewerOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2147483646;display:flex;align-items:center;justify-content:center;" n:attr="data-bind => 'click: $root.closeImageViewer'">
+                  <img data-bind="attr:{ src: $root.imageViewerUrl }, click: $root.closeImageViewer" style="max-width:94vw; max-height:94vh; object-fit:contain; margin: auto;" />
+                </div>
+                            <span class="text" data-bind="html: text"></span>
+                            <div data-bind="foreach: attachments" class="attachments">
+                                <div class="msg-attach-j">
+                                    <div data-bind="if: type === 'photo'" class="msg-attach-j-photo">
+                                        <a data-bind="attr:{ href: link }, click: function(){ var u = (photo && photo.url) ? photo.url : link; $root.viewImage(u); return false; }, clickBubble: false">
+                                            <img data-bind="attr:{ src: photo.url, alt: photo.caption }" />
+                                        </a>
+                                    </div>
+                                    <div data-bind="if: type === 'forward'" class="msg-attach-j-forward" style="border-left:2px solid #fde68a;padding-left:6px;margin:3px 0;color:#6b7280;font-size:12px;max-width:520px;">
+                                        <div><em>{_forwarded_from}</em> <strong data-bind="text: (sender && sender.name) ? sender.name : (from && from.name ? from.name : '')"></strong></div>
+                                        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: (text ? text : (summary ? summary : ''))"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div data-bind="if: $data.deleted" style="color:#6b7280;font-style:italic;">{_message_deleted}</div>
+                    </div>
+                    <div class="time" align="right" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;justify-content:flex-end;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span data-bind="html: timing.sent"></span>
+                            <span data-bind="if: (typeof $data.reply !== 'undefined' && $data.reply)" style="font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">
+                                ↩ <span data-bind="text: reply && reply.sender ? reply.sender.name : ''"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="messenger-app--input">
+            {if $correspondent->getId() === $thisUser->getId() || $correspondent->getPrivacyPermission('messages.write', $thisUser)}
+                <div class="messenger-app--input---messagebox">
+                    <div data-bind="visible: replyTarget()" style="border-left:3px solid #93c5fd;background:#f3f4f6;padding:6px 8px;margin-bottom:6px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-size:12px;color:#6b7280;">{_reply}</div>
+                            <div><strong data-bind="text: replyTarget() && replyTarget().sender ? replyTarget().sender.name : ''"></strong></div>
+                            <div style="color:#6b7280;max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: replyTarget() ? replyTarget().text : ''"></div>
+                        </div>
+                        <a href="#" data-bind="click: clearReply" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div class="composer-row">
+                        <button class="icon-btn" id="attach-btn" aria-label="Прикрепить" title="Прикрепить" data-bind="click: toggleAttachMenu">
+                          <svg class="icon" viewBox="0 0 24 24"><path d="M16.5 6.5l-7.8 7.8a3 3 0 104.2 4.2l8.5-8.5a5 5 0 10-7.1-7.1L5.7 10.5a7 7 0 109.9 9.9l7.1-7.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <textarea
+                                data-bind="value: messageContent, event: { keydown: onTextareaKeyPress }"
+                                name="message"
+                                placeholder="{_enter_message}"></textarea>
+                        <button class="icon-btn" aria-label="Отправить" title="Отправить" data-bind="click: sendMessage, enable: canSend">
+                          <svg class="icon" viewBox="0 0 24 24"><path d="M3 12l18-9-7 18-2-7-9-2z" fill="currentColor"/></svg>
+                        </button>
+                    </div>
+                    <div id="attach-menu" data-bind="visible: attachMenuOpen" style="display:none;">
+                        <a href="#" data-bind="click: $root.openPhotoPicker" style="display:block; padding:4px 8px;">{_choose_from_photos}</a>
+                        <a href="#" data-bind="click: $root.openVideoPicker" style="display:block; padding:4px 8px;">{_choose_from_videos}</a>
+                    </div>
+                </div>
+                <!-- Group controls (visible when in conversation mode) -->
+                <div data-bind="visible: isConversation()" style="margin:6px 0;">
+                    <button class="button" data-bind="click: openMembers">{_members}</button>
+                    <span style="margin-left:8px;">
+                        <button class="button" data-bind="click: generateInvite, enable: canGenerateInvite">{_generate_invite}</button>
+                        <button class="button" data-bind="click: revokeInvite, enable: canRevokeInvite" style="margin-left:4px;">{_revoke_invite}</button>
+                        <span data-bind="visible: inviteToken() && inviteLink()" style="margin-left:8px;">
+                            <input type="text" data-bind="value: inviteLink, attr: { readonly: true }" style="width:260px;" />
+                            <button class="button" data-bind="click: copyInvite">{_copy_link}</button>
+                        </span>
+                    </span>
+                </div>
+                <div class="messenger-app--input---attachments" style="position:relative;">
+                    <input type="file" id="attach-photo-input" accept="image/*" multiple style="display:none;" />
+                    <input type="file" id="attach-video-input" accept="video/*" multiple style="display:none;" />
+                    <div id="attach-preview" data-bind="foreach: attachments" style="margin-top:6px;">
+                        <span class="attach-chip" style="display:inline-block;padding:2px 6px;margin:2px;background:#f0f2f5;border-radius:10px;">
+                            <span data-bind="text: name"></span>
+                            <a href="#" data-bind="click: $parent.removeAttachment" style="margin-left:6px;color:#888;text-decoration:none;">×</a>
+                        </span>
+                        <div class="attach-progress" style="height:4px;background:#e1e7ed;border-radius:2px;overflow:hidden;width:120px;display:inline-block;vertical-align:middle;margin-left:6px;" data-bind="visible: status() === 'uploading'">
+                            <div style="height:100%;background:#4a7cff;width:0%" data-bind="style: { width: progress() + '%' }"></div>
+                        </div>
+                        <span class="attach-status" data-bind="visible: status() === 'done'" style="color:#2e7d32; margin-left:6px;">✓</span>
+                    </div>
+                    <div data-bind="visible: hasUploading" style="margin-top:4px;color:#6b7280;">
+                        {_uploading} <span data-bind="text: uploadingCount"></span> {_files}…
+                    </div>
+                </div>
+
+                <!-- Modal picker for existing media and uploads -->
+                <div data-bind="visible: pickerOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:20;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:720px;max-width:95vw;max-height:80vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div>
+                        <div data-bind="text: pickerTitle" style="font-weight:600;margin-bottom:4px;"></div>
+                        <div>
+                          <button class="button" data-bind="click: onAttachPhotoClick" style="margin-right:6px;">{_upload_photo}</button>
+                          <button class="button" data-bind="click: onAttachVideoClick">{_upload_video}</button>
+                        </div>
+                      </div>
+                      <a href="#" data-bind="click: $root.closePicker" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                      <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;" data-bind="foreach: pickerItems">
+                        <div class="cell" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px;text-align:center;">
+                          <div data-bind="if: type === 'photo'">
+                            <img data-bind="attr:{ src: url, alt: title }" style="width:100%;height:90px;object-fit:cover;border-radius:6px;" />
+                          </div>
+                          <div data-bind="if: type === 'video'">
+                            <img data-bind="attr:{ src: thumb, alt: title }" style="width:100%;height:90px;object-fit:cover;border-radius:6px;" />
+                          </div>
+                          <div style="margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                          <button class="button" style="margin-top:6px;" data-bind="click: $root.pickItem, enable: !$root.isAlreadyAttached($data)">{_attach}</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="padding:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                      <div></div>
+                      <button class="button" data-bind="click: loadMore, enable: !pickerLoading()">{_load_more}</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Members modal -->
+                <div data-bind="visible: membersOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:21;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:560px;max-width:95vw;max-height:70vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div style="font-weight:600;">{_members}</div>
+                      <a href="#" data-bind="click: closeMembers" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div data-bind="visible: membersLoading" style="color:#6b7280;">{_loading}…</div>
+                      <div data-bind="foreach: members">
+                        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding:6px 0;">
+                          <div>
+                            <span data-bind="text: 'ID ' + user_id"></span>
+                            <span style="margin-left:8px;color:#6b7280;" data-bind="text: $root.roleLabel(role)"></span>
+                          </div>
+                          <div>
+                            <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.removeMember(user_id); }, enable: $root.canKick(user_id, role)">{_remove_from_group}</button>
+                            <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.toggleModerator(user_id, role); }, enable: $root.canToggleMod(user_id, role), text: role === 'moderator' ? tr('unset_moderator') : tr('set_moderator')"></button>
+                            <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.banUser(user_id); }, enable: $root.canKick(user_id, role)">{_ban}</button>
+                            <button class="button" data-bind="click: function(){ $root.transferOwner(user_id); }, enable: $root.myRole() === 'owner' && user_id !== window.CURRENT_USER_ID">{_make_owner}</button>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Friend picker to add members -->
+                      <div style="margin-top:12px;">
+                        <div style="font-weight:600;margin-bottom:6px;">{_add_member}</div>
+                        <input type="text" placeholder="{_search_friend}" data-bind="value: friendsQuery, valueUpdate: 'input'" style="width:100%;margin-bottom:6px;" />
+                        <div data-bind="foreach: filteredFriends" style="max-height:160px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;border-bottom:1px solid #f3f4f6;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                              <img n:attr="data-bind => 'attr: { src: avatar, alt: name }'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                              <span data-bind="text: name"></span>
+                            </div>
+                            <button class="button" data-bind="click: function(){ $root.addFriendToGroup(id); }">{_add}</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Forward picker modal (friends only) -->
+                <div data-bind="visible: $root.forwardOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:21;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:560px;max-width:95vw;max-height:70vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div style="font-weight:600;">{_forward_messages}</div>
+                      <a href="#" data-bind="click: $root.closeForwardPicker" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+                      <div style="display:flex;gap:8px;">
+                        <button class="button" data-bind="css: { active: $root.forwardTab() === 'friends' }, click: function(){ $root.forwardTab('friends'); }">{_friends_tab}</button>
+                        <button class="button" data-bind="css: { active: $root.forwardTab() === 'groups' }, click: function(){ $root.forwardTab('groups'); }">{_groups_tab}</button>
+                      </div>
+                      <div data-bind="visible: $root.forwardTab() === 'friends'">
+                        <input type="text" placeholder="Поиск друга" data-bind="value: friendsQuery, valueUpdate: 'input'" style="width:100%;margin-bottom:6px;" />
+                        <div data-bind="foreach: filteredFriends" style="max-height:260px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;border-bottom:1px solid #f3f4f6;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                              <img n:attr="data-bind => 'attr: { src: avatar, alt: name }'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                              <span data-bind="text: name"></span>
+                            </div>
+                            <button class="button" data-bind="click: function(){ $root.sendForwardTo(id); }">{_forward_messages}</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div data-bind="visible: $root.forwardTab() === 'groups'">
+                        <div data-bind="foreach: $root.forwardGroups" style="max-height:260px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;border-bottom:1px solid #f3f4f6;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                              <img data-bind="attr: { src: (avatar_url || '/assets/packages/static/openvk/img/dialog_group.png'), alt: title }" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                              <span data-bind="text: title"></span>
+                            </div>
+                            <button class="button" data-bind="click: function(){ $root.sendForwardToGroup(id); }">{_forward_to_this_group}</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Settings modal -->
+                <!-- Message actions sheet -->
+                <div data-bind="visible: $root.msgActionsOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:30;">
+                  <div style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);background:#111827;color:#e5e7eb;width:100%;max-width:600px;border-top-left-radius:14px;border-top-right-radius:14px;box-shadow:0 -8px 30px rgba(0,0,0,0.35);padding:8px 0;">
+                    <div style="padding:10px 14px;border-bottom:1px solid #1f2937;display:flex;justify-content:space-between;align-items:center;">
+                      <div style="font-weight:600;">Действия</div>
+                      <a href="#" data-bind="click: $root.closeMsgActions" style="text-decoration:none;color:#9aa4b2;font-size:18px;">×</a>
+                    </div>
+                    <div style="display:flex;flex-direction:column;">
+                      <a href="#" style="padding:12px 16px;color:#e5e7eb;text-decoration:none;display:flex;justify-content:space-between;" data-bind="click: $root.actionReply">Ответить <span>↩</span></a>
+                      <a href="#" style="padding:12px 16px;color:#e5e7eb;text-decoration:none;display:flex;justify-content:space-between;" data-bind="click: $root.actionCopy">Скопировать <span>📋</span></a>
+                      <a href="#" style="padding:12px 16px;color:#e5e7eb;text-decoration:none;display:flex;justify-content:space-between;" data-bind="click: $root.actionForward">Переслать <span>↗</span></a>
+                      <a href="#" style="padding:12px 16px;color:#ef4444;text-decoration:none;display:flex;justify-content:space-between;" data-bind="click: $root.actionDelete">Удалить <span>🗑</span></a>
+                      <a href="#" style="padding:12px 16px;color:#e5e7eb;text-decoration:none;display:flex;justify-content:space-between;" data-bind="click: $root.actionSelect">Выбрать <span>✔</span></a>
+                    </div>
+                  </div>
+                </div>
+                <div data-bind="visible: settingsOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:22;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:620px;max-width:95vw;max-height:80vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div style="font-weight:600;">{_group_settings}</div>
+                      <a href="#" data-bind="click: closeSettings" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div style="margin-bottom:12px;">
+                        <div style="font-weight:600;margin-bottom:6px;">{_group_title}</div>
+                        <input type="text" style="width:100%;" data-bind="value: settingsTitle" />
+                        <button class="button" style="margin-top:6px;" data-bind="click: saveTitle, enable: canOwner">{_save}</button>
+                      </div>
+                      <div style="margin-bottom:12px;">
+                        <div style="font-weight:600;margin-bottom:6px;">{_group_avatar}</div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                          <img id="group_settings_avatar_img" src="{isset($groupAvatarUrl) && $groupAvatarUrl ? $groupAvatarUrl : '/assets/packages/static/openvk/img/dialog_group.png'}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid #eee;" />
+                          <button class="button" data-bind="click: uploadGroupAvatar, enable: canOwner">{_upload_photo}</button>
+                        </div>
+                      </div>
+                      <div style="margin-bottom:12px;">
+                        <div style="font-weight:600;margin-bottom:6px;">{_group_members}</div>
+                        <div data-bind="foreach: members">
+                          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding:6px 0;">
+                            <div>
+                              <span data-bind="text: (name ? (name + ' (ID ' + user_id + ')') : ('ID ' + user_id))"></span>
+                              <span style="margin-left:8px;color:#6b7280;" data-bind="text: $root.roleLabel(role)"></span>
+                            </div>
+                            <div>
+                              <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.removeMember(user_id); }, enable: $root.canKick(user_id, role)">{_remove_from_group}</button>
+                              <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.toggleModerator(user_id, role); }, enable: $root.canToggleMod(user_id, role), text: role === 'moderator' ? tr('unset_moderator') : tr('set_moderator')"></button>
+                              <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.banUser(user_id); }, enable: $root.canKick(user_id, role)">{_ban}</button>
+                              <button class="button" data-bind="click: function(){ $root.transferOwner(user_id); }, enable: $root.myRole() === 'owner' && user_id !== window.CURRENT_USER_ID">{_make_owner}</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div style="font-weight:600;margin-bottom:6px;">{_invitation}</div>
+                        <button class="button" data-bind="click: generateInvite, enable: canGenerateInvite">{_generate_invite}</button>
+                        <button class="button" style="margin-left:6px;" data-bind="click: revokeInvite, enable: canRevokeInvite">{_revoke_invite}</button>
+                        <div data-bind="visible: inviteToken() && inviteLink()" style="margin-top:6px;display:flex;gap:6px;align-items:center;">
+                          <input type="text" data-bind="value: inviteLink, attr: { readonly: true }" style="flex:1;" />
+                          <button class="button" data-bind="click: copyInvite">{_copy_link}</button>
+                        </div>
+                        <div style="margin-top:12px;border-top:1px solid #eee;padding-top:10px;">
+                          <button class="button" style="background:#ef4444;border-color:#ef4444;" data-bind="click: leaveConversation">{_leave_group}</button>
+                        </div>
+                        <div style="margin-top:16px;">
+                          <div style="font-weight:600;margin-bottom:6px;">{_group_banned}</div>
+                          <div data-bind="foreach: bans" style="max-height:160px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;border-bottom:1px solid #f3f4f6;">
+                              <div style="display:flex;align-items:center;gap:8px;">
+                                <img n:attr="data-bind => 'attr: { src: avatar, alt: name }'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                                <span data-bind="text: name + ' (ID ' + user_id + ')' "></span>
+                              </div>
+                              <button class="button" data-bind="click: function(){ $root.unbanUser(user_id); }">{_unban}</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            {else}
+                <div class="blocked" data-localized-text="{_messages_blocked}"></div>
+            {/if}
+        </div>
+    </div>
+    
+    <script src="/assets/packages/static/openvk/js/node_modules/knockout/build/output/knockout-latest.js"></script>
+    <script>
+        if (!window.ko) {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout-min.js"><\\/script>');
+        }
+    </script>
+    <script src="/assets/packages/static/openvk/js/conversation_upload.js"></script>
+    <script>
+        // Inject server-provided conversation id and globals for groups and CSRF token
+        window.GROUP_CONV_ID = {isset($convId) && $convId ? $convId : 0};
+        window.CSRF_HASH = {$csrfToken};
+        window.GROUP_TITLE = {isset($groupTitle) ? json_encode($groupTitle) : '""'};
+        try { var _gtEl = document.getElementById('group_title_span'); if (_gtEl) window.GROUP_TITLE = _gtEl.textContent; } catch(e){}
+        window.GROUP_IS_OWNER = {isset($groupIsOwner) && $groupIsOwner ? 'true' : 'false'};
+        try { if (typeof window.GROUP_IS_OWNER === 'string') window.GROUP_IS_OWNER = (window.GROUP_IS_OWNER === 'true'); } catch(e){}
+        window.GROUP_AVATAR_URL = {isset($groupAvatarUrl) && $groupAvatarUrl ? json_encode($groupAvatarUrl) : '""'};
+        function MessengerViewModel(initialMessages = []) {
+            window.messages     = ko.observableArray(initialMessages);
+            this.messages       = window.messages;
+            this.messageContent = ko.observable("");
+            this.attachments    = ko.observableArray([]);
+            this.attachMenuOpen = ko.observable(false);
+            // Selection state
+            this.selected       = ko.observableArray([]);
+            this.isSelected     = (id) => { try { return ko.utils.arrayIndexOf(this.selected(), id) !== -1; } catch(e){ var arr = this.selected() || []; return arr.indexOf(id) !== -1; } };
+            this.toggleSelect   = (id) => {
+                var arr = this.selected() || [];
+                var idx = -1;
+                try { idx = ko.utils.arrayIndexOf(arr, id); } catch(e) { idx = arr.indexOf(id); }
+                if (idx !== -1) { arr.splice(idx, 1); } else { arr.push(id); }
+                this.selected(arr);
+            };
+            this.clearSelection = () => { this.selected([]); };
+            this.hasSelection   = ko.pureComputed(() => this.selected().length > 0);
+            this.selectedCount  = ko.pureComputed(() => this.selected().length);
+            // Message action sheet state/handlers
+            this.msgActionsOpen   = ko.observable(false);
+            this.msgActionsTarget = ko.observable(null);
+            this.openMsgActions   = (msg, e) => { try { if (e && e.preventDefault) e.preventDefault(); } catch(_){}; this.msgActionsTarget(msg || null); this.msgActionsOpen(true); };
+            this.closeMsgActions  = (e) => { try { if (e && e.preventDefault) e.preventDefault(); } catch(_){}; this.msgActionsOpen(false); this.msgActionsTarget(null); };
+            this.actionReply      = (e) => { try { if (e && e.preventDefault) e.preventDefault(); } catch(_){}; var m = this.msgActionsTarget(); if (m) { this.setReply(m); } this.closeMsgActions(); };
+            this.actionCopy       = (e) => {
+                try { if (e && e.preventDefault) e.preventDefault(); } catch(_){}
+                try {
+                    var m = this.msgActionsTarget(); if (!m) return this.closeMsgActions();
+                    var t = '';
+                    if (m.text) {
+                        var tmp = document.createElement('div'); tmp.innerHTML = m.text; t = (tmp.textContent || tmp.innerText || '').trim();
+                    }
+                    if (!t) t = '';
+                    try { navigator.clipboard.writeText(t); } catch(_) {}
+                } finally { this.closeMsgActions(); }
+            };
+            this.actionForward    = (e) => { try { if (e && e.preventDefault) e.preventDefault(); } catch(_){}; var m = this.msgActionsTarget(); if (m && typeof m.uuid !== 'undefined') { this.selected([m.uuid]); this.openForwardPicker(); } this.closeMsgActions(); };
+            this.actionDelete     = (e) => { try { if (e && e.preventDefault) e.preventDefault(); } catch(_){}; var m = this.msgActionsTarget(); if (m && typeof m.uuid !== 'undefined') { this.selected([m.uuid]); this.deleteSelected(); } this.closeMsgActions(); };
+            this.actionSelect     = (e) => { try { if (e && e.preventDefault) e.preventDefault(); } catch(_){}; var m = this.msgActionsTarget(); if (m && typeof m.uuid !== 'undefined') { this.toggleSelect(m.uuid); } this.closeMsgActions(); };
+            // Picker state
+            this.pickerOpen     = ko.observable(false);
+            this.pickerType     = ko.observable('photo');
+            this.pickerTitle    = ko.observable('');
+            // Reply state
+            this.replyTarget    = ko.observable(null);
+            this.setReply       = (msg) => {
+                try {
+                    if (!msg) return;
+                    var ruuid = (typeof msg.uuid !== 'undefined' && msg.uuid !== null) ? msg.uuid : (typeof msg.id !== 'undefined' ? msg.id : null);
+                    if (ruuid === null) return;
+                    this.replyTarget({ uuid: ruuid, sender: msg.sender, text: msg.text });
+                } catch(e){}
+            };
+            this.clearReply     = (e) => { if (e && e.preventDefault) e.preventDefault(); this.replyTarget(null); };
+            // Image viewer
+            this.imageViewerOpen = ko.observable(false);
+            this.imageViewerUrl  = ko.observable('');
+            this.viewImage       = (url) => { try { this.imageViewerUrl(url||''); this.imageViewerOpen(true); } catch(e){} };
+            this.closeImageViewer= (e) => { try { if (e && e.preventDefault) e.preventDefault(); } catch(_){}; this.imageViewerOpen(false); this.imageViewerUrl(''); };
+            // Helpers
+            this.scrollBottom   = () => { try { var c = document.querySelector('.messenger-app--messages'); if (c) c.scrollTop = c.scrollHeight; } catch(e){} };
+            this.initialLoaded  = false;
+            this.pickerItems    = ko.observableArray([]);
+            this.pickerOffset   = ko.observable(0);
+            this.pickerLimit    = ko.observable(24);
+            this.pickerLoading  = ko.observable(false);
+            // Cache per type to avoid refetch on every open
+            this.pickerCache    = {
+                photo: { items: [], offset: 0, loaded: false },
+                video: { items: [], offset: 0, loaded: false },
+            };
+            // Dedup helper
+            this.isAlreadyAttached = (it) => {
+                try {
+                    var t = it.type, i = it.id;
+                    if (!t || !i) return false;
+                    if (window.Msg && Array.isArray(window.Msg.pendingAttachments)) {
+                        return window.Msg.pendingAttachments.some(x => x.type === t && x.id === i);
+                    }
+                } catch(e){}
+                return false;
+            };
+            this.hasUploading   = ko.pureComputed(() => this.attachments().some(a => a.status && a.status() === 'uploading'));
+            this.uploadingCount = ko.pureComputed(() => this.attachments().filter(a => a.status && a.status() === 'uploading').length);
+            this.canSend        = ko.pureComputed(() => {
+                const hasText = (this.messageContent() || "").trim().length > 0;
+                const hasAtts = this.attachments().length > 0;
+                return (hasText || hasAtts) && !this.hasUploading();
+            });
+            // Conversation helpers
+            this.membersOpen    = ko.observable(false);
+            this.members        = ko.observableArray([]);
+            this.membersLoading = ko.observable(false);
+            this.bans           = ko.observableArray([]);
+            this.inviteToken    = ko.observable('');
+            this.inviteLink     = ko.pureComputed(() => {
+                var tok = this.inviteToken();
+                if (!tok) return '';
+                return window.location.origin + '/messenger/api/conversations/join?token=' + tok;
+            });
+            this.isConversation = ko.pureComputed(() => !!(window.Msg && window.Msg.CONVERSATION_ID));
+            this.myRole         = ko.observable(!!window.GROUP_IS_OWNER ? 'owner' : 'member');
+            this.canGenerateInvite = ko.pureComputed(() => this.myRole() === 'owner');
+            this.canRevokeInvite   = ko.pureComputed(() => this.myRole() === 'owner');
+            this.generateInvite = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/invite/generate', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) this.inviteToken(j.token || j.invite_token || ''); });
+            };
+            this.revokeInvite = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/invite/revoke', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) this.inviteToken(''); });
+            };
+            this.copyInvite = (e) => {
+                if (e) { try { e.preventDefault(); } catch(_){} }
+                var link = this.inviteLink(); if (!link) return;
+                try { navigator.clipboard.writeText(link); } catch(_) {}
+            };
+            this.leaveConversation = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Выйти из этой группы?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/leave', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) { try { window.location.href = '/im?tab=groups'; } catch(e){} } });
+            };
+            // Settings modal state
+            this.settingsOpen   = ko.observable(false);
+            this.settingsTitle  = ko.observable(window.GROUP_TITLE || "");
+            this.settingsAvatarUrl = ko.observable(window.GROUP_AVATAR_URL || '');
+            this.canOwner       = ko.pureComputed(() => (this.myRole() === 'owner') || !!window.GROUP_IS_OWNER);
+            this.openSettings   = () => { this.settingsOpen(true); this.reloadMembers(); this.loadFriends(); this.loadBans(); };
+            this.closeSettings  = (e) => { if (e && e.preventDefault) e.preventDefault(); this.settingsOpen(false); };
+            this.saveTitle      = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var t = (this.settingsTitle()||'').trim();
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('title', t); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/rename', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j.ok) { try { var el = document.getElementById('group_title_span'); if (el) el.textContent = t; window.GROUP_TITLE = t; localStorage.setItem('groups_refresh','1'); } catch(e){} } });
+            };
+            this.uploadGroupAvatar = async () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                // Reuse hidden input from photo picker or create a temp input
+                var el = document.createElement('input');
+                el.type = 'file'; el.accept = 'image/*';
+                el.onchange = async (e) => {
+                    try {
+                        var file = e.target.files && e.target.files[0]; if (!file) return;
+                        var up = await uploadPhoto(file, 'group avatar');
+                        if (up && up.id) {
+                            var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('photo_id', String(up.id)); if (up.url) fd.set('photo_url', String(up.url)); fd.set('hash', {$csrfToken});
+                            fetch('/messenger/api/conversations/set-avatar', { method:'POST', credentials:'same-origin', body: fd })
+                              .then(r=>r.json()).then(j=>{ if (j && j.ok) { try { var url = j.avatar_url || up.url || ''; this.settingsAvatarUrl(url); var img = document.getElementById('group_avatar_img'); if (img && url) img.src = url; var simg = document.getElementById('group_settings_avatar_img'); if (simg && url) simg.src = url; localStorage.setItem('groups_refresh','1'); } catch(e){} } });
+                        }
+                    } catch(e) {}
+                };
+                el.click();
+            };
+            this.openMembers = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.membersOpen(true);
+                this.reloadMembers();
+            };
+            this.closeMembers = (e) => { if (e && e.preventDefault) e.preventDefault(); this.membersOpen(false); };
+            this.roleLabel = (r) => {
+                if (r === 'owner') return tr('owner_role');
+                if (r === 'moderator') return tr('moderator_role');
+                return tr('member_role');
+            };
+            this.canKick = (uid, role) => {
+                var mine = this.myRole();
+                if (mine === 'owner') return uid !== window.CURRENT_USER_ID && uid !== 0; // owner can kick anyone but self
+                if (mine === 'moderator') return role === 'member' && uid !== window.CURRENT_USER_ID;
+                return false;
+            };
+            this.canToggleMod = (uid, role) => {
+                return this.myRole() === 'owner' && uid !== window.CURRENT_USER_ID;
+            };
+            // (duplicate invite methods removed)
+            this.reloadMembers = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                this.membersLoading(true);
+                fetch('/messenger/api/conversations/members?conversation_id=' + window.Msg.CONVERSATION_ID, { credentials:'same-origin' })
+                  .then(r=>r.json())
+                  .then(j=>{
+                      if (j.ok && Array.isArray(j.members)) {
+                          this.members(j.members);
+                          // infer my role
+                          try{
+                              var me = (j.members || []).find(function(m){ return m.user_id === window.CURRENT_USER_ID; });
+                              if (me && me.role) this.myRole(me.role);
+                          }catch(e){}
+                          // refresh friend list excluding members
+                          this.loadFriends();
+                      }
+                  })
+                  .finally(()=> this.membersLoading(false));
+            };
+            this.loadBans = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                fetch('/messenger/api/conversations/bans?conversation_id=' + window.Msg.CONVERSATION_ID, { credentials:'same-origin' })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok && Array.isArray(j.bans)) this.bans(j.bans); });
+            };
+            this.banUser = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Забанить участника ID ' + uid + ' и удалить из группы?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/ban', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) { this.reloadMembers(); this.loadBans(); } });
+            };
+            this.unbanUser = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Разбанить пользователя ID ' + uid + '?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/unban', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) this.loadBans(); });
+            };
+            this.transferOwner = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Передать владение пользователю ID ' + uid + '?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/transfer-owner', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) { this.reloadMembers(); this.myRole('member'); } });
+            };
+            // Friends picker state
+            this.friendsQuery   = ko.observable('');
+            this.friends        = ko.observableArray([]);
+            this.filteredFriends = ko.pureComputed(() => {
+                var q = (this.friendsQuery()||'').toLowerCase();
+                if (!q) return this.friends();
+                try { return this.friends().filter(f => (f.name||'').toLowerCase().indexOf(q) !== -1); } catch(e) { return this.friends(); }
+            });
+            this.loadFriends = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                fetch('/messenger/api/friends?conversation_id=' + window.Msg.CONVERSATION_ID, { credentials:'same-origin' })
+                  .then(r=>r.json()).then(j=>{ if (j.ok && Array.isArray(j.items)) this.friends(j.items); });
+            };
+            this.addFriendToGroup = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/add-member', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j.ok) { this.reloadMembers(); this.loadFriends(); } });
+            };
+            this.removeMember = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Удалить участника ID ' + uid + ' из группы?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/remove-member', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j.ok) this.reloadMembers(); });
+            };
+            this.toggleModerator = (uid, role) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var next = role === 'moderator' ? 'member' : 'moderator';
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('role', next); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/set-role', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j.ok) this.reloadMembers(); });
+            };
+            
+            this.sendMessage = model => {
+                if(model.messageContent() === "") return false;
+                window.Msg.sendMessage(model.messageContent());
+                model.messageContent("");
+            };
+            this.loadHistory = _ => {
+                window.Msg._loadHistory();
+            };
+            
+            this.onMessagesScroll   = (model, e) => {
+                if(e.target.scrollTop < 21)
+                    model.loadHistory();
+            };
+            this.onTextareaKeyPress = (model, e) => {
+                if(e.which === 13) {
+                    if(!e.metaKey && !e.shiftKey) {
+                        let ta = u("textarea[name=message]").nodes[0];
+                        ta.blur(); //Fix update
+                        model.sendMessage(model);
+                        ta.focus();
+                        
+                        return false;
+                    }
+                }
+                
+                return true;
+            };
+            this.toggleAttachMenu = _ => {
+                this.attachMenuOpen(!this.attachMenuOpen());
+                try { adjustPadding(); } catch(e){}
+            };
+            this.openPhotoPicker = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                this._openPicker('photo', tr('choose_from_photos'));
+            };
+            this.openVideoPicker = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                this._openPicker('video', tr('choose_from_videos'));
+            };
+            this.onAttachPhotoClick = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                var el = document.getElementById('attach-photo-input');
+                if (el) el.click();
+            };
+            this.onAttachVideoClick = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                var el = document.getElementById('attach-video-input');
+                if (el) el.click();
+            };
+            this.removeAttachment = (item) => {
+                try {
+                    // remove from VM list
+                    this.attachments.remove(item);
+                } catch(e){}
+                // also ask Messenger to forget it
+                if (window.Msg && Array.isArray(window.Msg.pendingAttachments)) {
+                    if (item.id && item.type) {
+                        window.Msg.pendingAttachments = window.Msg.pendingAttachments.filter(x => !(x.id === item.id && x.type === item.type));
+                    } else {
+                        // fallback: match by name
+                        window.Msg.pendingAttachments = window.Msg.pendingAttachments.filter(x => x.name !== item.name);
+                    }
+                }
+            };
+            // Picker helpers
+            this.closePicker = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.pickerOpen(false);
+            };
+            this._openPicker = (type, title) => {
+                this.pickerType(type);
+                this.pickerTitle(title || (type === 'photo' ? tr('photos') : tr('videos')));
+                var cache = this.pickerCache[type] || { items: [], offset: 0, loaded: false };
+                if (cache.loaded && cache.items.length > 0) {
+                    // reuse cached content
+                    this.pickerItems(cache.items.slice(0));
+                    this.pickerOffset(cache.offset);
+                    this.pickerOpen(true);
+                    return;
+                }
+                this.pickerItems([]);
+                this.pickerOffset(0);
+                this.pickerOpen(true);
+                this._loadPickerItems(true);
+            };
+            this._loadPickerItems = (reset = false) => {
+                const type = this.pickerType();
+                const cache = this.pickerCache[type] || (this.pickerCache[type] = { items: [], offset: 0, loaded: false });
+                const offset = reset ? 0 : (cache.offset || 0);
+                const limit = this.pickerLimit();
+                const url = type === 'photo'
+                  ? ("/im/api/my-photos.json?offset=" + offset + "&limit=" + limit)
+                  : ("/im/api/my-videos.json?offset=" + offset + "&limit=" + limit);
+                if (reset) {
+                    cache.items  = [];
+                    cache.offset = 0;
+                    cache.loaded = false;
+                    this.pickerItems([]);
+                    this.pickerOffset(0);
+                }
+                this.pickerLoading(true);
+                fetch(url, { credentials: 'same-origin' })
+                  .then(r => r.json())
+                  .then(j => {
+                    const arr = Array.isArray(j.items) ? j.items : [];
+                    // fill cache and current observable
+                    for (var i = 0; i < arr.length; i++) {
+                        cache.items.push(arr[i]);
+                        this.pickerItems.push(arr[i]);
+                    }
+                    cache.offset = offset + arr.length;
+                    cache.loaded = true;
+                    this.pickerOffset(cache.offset);
+                  })
+                  .catch(_ => {})
+                  .finally(() => this.pickerLoading(false));
+            };
+            this.loadMore = _ => this._loadPickerItems(false);
+            this.pickItem = (item) => {
+                if (this.isAlreadyAttached(item)) return;
+                try {
+                    var chip = { name: item.title || (item.type + ' ' + item.id), progress: ko.observable(100), status: ko.observable('done') };
+                    chip.id = item.id; chip.type = item.type;
+                    this.attachments.push(chip);
+                } catch(e){}
+                if (window.Msg && Array.isArray(window.Msg.pendingAttachments)) {
+                    window.Msg.pendingAttachments.push({ type: item.type, id: item.id, name: item.title || (item.type + ' ' + item.id), url: (item.url || item.thumb || '') });
+                }
+                this.pickerOpen(false);
+            };
+            // Forward picker (friends-only)
+            this.forwardOpen    = ko.observable(false);
+            this.forwardTab     = ko.observable('friends'); // friends | groups
+            this.openForwardPicker = () => {
+                this.forwardTab('friends');
+                this.forwardOpen(true);
+                this.loadForwardFriends();
+                this.loadForwardGroups();
+            };
+            this.closeForwardPicker = (e) => { if (e && e.preventDefault) e.preventDefault(); this.forwardOpen(false); };
+            this.loadForwardFriends = () => {
+                fetch('/messenger/api/dialogs/recent', { credentials:'same-origin' })
+                  .then(r=>r.json()).then(j=>{ if (j && Array.isArray(j.items)) this.friends(j.items); });
+            };
+            // groups for forwarding
+            this.forwardGroups  = ko.observableArray([]);
+            this.loadForwardGroups = () => {
+                fetch('/messenger/api/conversations/list', { credentials:'same-origin' })
+                  .then(r=>r.json()).then(j=>{ if (j && Array.isArray(j.items)) this.forwardGroups(j.items); });
+            };
+            this.sendForwardTo = (uid) => {
+                try {
+                    var ids = this.selected(); if (!ids || ids.length === 0) return;
+                    // Persist selection into localStorage and navigate to dialog
+                    try { localStorage.setItem('forward_queue', JSON.stringify(ids)); } catch(_) {}
+                    this.forwardOpen(false);
+                    this.clearSelection();
+                    window.location.href = '/im?sel=' + String(uid);
+                } catch(e){}
+            };
+            this.sendForwardToGroup = (cid) => {
+                try {
+                    var ids = this.selected(); if (!ids || ids.length === 0) return;
+                    try { localStorage.setItem('forward_queue', JSON.stringify(ids)); } catch(_) {}
+                    this.forwardOpen(false);
+                    this.clearSelection();
+                    window.location.href = '/grp' + String(cid);
+                } catch(e){}
+            };
+            this.deleteSelected = () => {
+                var ids = this.selected(); if (!ids || ids.length === 0) return;
+                if (!confirm(tr('confirm_delete_messages') || 'Удалить выбранные сообщения?')) return;
+                var fd = new FormData();
+                for (var i=0;i<ids.length;i++) fd.append('ids[]', String(ids[i]));
+                fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/messages/delete', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{
+                      // optimistic update in UI
+                      try {
+                          var arr = this.messages();
+                          for (var k=0;k<arr.length;k++) {
+                              if (ids.indexOf(arr[k].uuid) !== -1) {
+                                  arr[k].deleted = true; arr[k].text = ''; arr[k].attachments = [];
+                              }
+                          }
+                          this.messages.valueWillMutate(); this.messages(arr); this.messages.valueHasMutated();
+                      } catch(e){}
+                      this.clearSelection();
+                  }).catch(_=>{});
+            };
+        }
+        
+        class Messenger {
+            constructor(messages = []) {
+                this.vm     = new MessengerViewModel(messages);
+                ko.applyBindings(this.vm);
+                this.appEl  = document.querySelector(".messenger-app--messages");
+                this.offset = 0;
+                this.pendingAttachments = [];
+                this.CONVERSATION_ID = (function(){
+                    if (window.GROUP_CONV_ID && window.GROUP_CONV_ID > 0) return window.GROUP_CONV_ID;
+                    var m = location.search.match(/[?&]conv=(\d+)/);
+                    if (m) return parseInt(m[1], 10);
+                    var gp = location.pathname.match(/\/grp(\d+)/);
+                    if (gp) return parseInt(gp[1], 10);
+                    // For DMs (?sel=uid) we must return null so legacy API is used
+                    return null;
+                })();
+                window.CURRENT_USER_ID = {$thisUser->getId()};
+
+                this._loadHistory();
+                if (!this.CONVERSATION_ID) {
+                    this._setupListener();
+                }
+                this.appEl.scrollTop = this.appEl.scrollHeight;
+                this._wireAttachmentInput();
+                try { adjustPadding(); } catch(e){}
+                // Preload members/invite when in conversation
+                if (this.CONVERSATION_ID) {
+                    try { this.vm.reloadMembers(); } catch(e){}
+                }
+                // Preload forward queue if redirected from forward picker (works for 1:1 and groups)
+                try {
+                    var fq = localStorage.getItem('forward_queue');
+                    if (fq) {
+                        var ids = JSON.parse(fq);
+                        if (Array.isArray(ids) && ids.length > 0) {
+                            for (var i=0;i<ids.length;i++) {
+                                this.pendingAttachments.push({ type: 'forward', id: ids[i], name: 'forward ' + ids[i] });
+                                if (this.vm && typeof this.vm.attachments === 'function') {
+                                    var chip = { name: 'forward ' + ids[i], progress: ko.observable(100), status: ko.observable('done') };
+                                    chip.id = ids[i]; chip.type = 'forward';
+                                    this.vm.attachments.push(chip);
+                                }
+                            }
+                        }
+                        localStorage.removeItem('forward_queue');
+                    }
+                } catch(_){}}
+            
+            _loadHistory() {
+                if (this.CONVERSATION_ID) {
+                    var url = '/messenger/api/conversations/messages?conversation_id=' + this.CONVERSATION_ID;
+                    if (this.offset > 0) url += ('&after=' + this.offset);
+                    fetch(url, { credentials:'same-origin' })
+                      .then(r=>r.json())
+                      .then(j=>{
+                          var items = Array.isArray(j.items) ? j.items : [];
+                          if (items.length > 0) {
+                              if (!this.initialLoaded) {
+                                  // first page: append in order and scroll bottom
+                                  for (var i=0;i<items.length;i++) { try { this.addMessage(items[i]); } catch(e){} }
+                                  var last = items[items.length - 1];
+                                  if (last && typeof last.uuid !== 'undefined') this.offset = last.uuid;
+                                  this.initialLoaded = true;
+                                  setTimeout(()=>{ try { this.appEl.scrollTop = this.appEl.scrollHeight; } catch(e){} }, 0);
+                              } else {
+                                  // older history
+                                  this.prependMessages(items);
+                                  var last = items[items.length - 1];
+                                  if (last && typeof last.uuid !== 'undefined') this.offset = last.uuid;
+                              }
+                          }
+                      })
+                      .catch(function(){})
+                      .finally(()=>{});
+                    return;
+                }
+                function fetchDM(url){
+                    let x = new XMLHttpRequest();
+                    x.open("GET", url, false);
+                    try { x.send(); } catch(_) {}
+                    return x;
+                }
+                // try legacy first
+                let xhr = fetchDM("/im/api/messages" + {$correspondent->getId()} + "/" + this.offset + ".json");
+                let messages;
+                try {
+                    if (xhr.status === 200 && xhr.responseText) {
+                        messages = JSON.parse(xhr.responseText);
+                    }
+                } catch(_) {}
+                if (!Array.isArray(messages)) {
+                    // fallback to messenger route if available
+                    xhr = fetchDM("/messenger/api/get-messages/" + {$correspondent->getId()} + "/" + this.offset);
+                    try { messages = JSON.parse(xhr.responseText); } catch(_) { messages = []; }
+                }
+                let lastMessage = messages[messages.length - 1];
+                if(typeof lastMessage !== "undefined") this.offset = lastMessage.uuid;
+                
+                this.prependMessages(messages);
+            }
+            
+            _setupListener() {
+                let listenLongpool = () => {
+                    let xhr = new XMLHttpRequest();
+                    xhr.open("GET", "/im12", true);
+                    xhr.onload = () => {
+                        let data = JSON.parse(xhr.responseText);
+                        data.forEach(event => {
+                            event = event.event;
+                            if(event.type !== "newMessage")
+                                return;
+                            else if(event.message.sender.id !== {$correspondent->getId()})
+                                return;
+                            else if(this.offset >= event.message.uuid)
+                                return void(console.warn("Gay message recieved, skipping. [-WHeterosexual]"));
+                            
+                            this.addMessage(event.message);
+                            this.offset = event.message.uuid;
+                        });
+                        
+                        listenLongpool();
+                    };
+                    xhr.send();
+                };
+                
+                listenLongpool();
+            }
+            
+            appendMessages(messages) {
+                messages.forEach(m => window.messages.push(m));
+            }
+            
+            prependMessages(messages) {
+                messages.forEach(m => window.messages.unshift(m));
+            }
+            
+            addMessage(message, scroll = true) {
+                this.appendMessages([message]);
+                
+                if(scroll) {
+                    this.appEl.scrollTop = this.appEl.scrollHeight;
+                }
+            }
+            
+            _patchMessage(tempId, message) {
+                for(let i = window.messages().length - 1; i > -1; i--) {
+                    let msg = window.messages()[i];
+                    if(typeof msg._tuid === "undefined")
+                        return;
+                    else if(msg._tuid !== tempId)
+                        return;
+                    
+                    window.messages.valueWillMutate();
+                    window.messages()[i] = message;
+                    window.messages.valueHasMutated();
+                }
+            }
+            
+            _newSelfMessage(content = "...") {
+                return {
+                    "sender": {
+                        "link": {$thisUser->getURL()},
+                        "avatar": {$thisUser->getAvatarUrl()},
+                        "name": {$thisUser->getFirstName()}
+                    },
+                    "timing": {
+                        "sent": window.API.Service.getTime(),
+                        "edited": null
+                    },
+                    "text": content,
+                    "read": false,
+                    "attachments": [],
+                    "_tuid": Math.ceil(performance.now())
+                };
+            }
+            
+            _newReplyMessage(content = "...") {
+                return {
+                    "sender": {
+                        "link": {$correspondent->getURL()},
+                        "avatar": {$correspondent->getAvatarUrl()},
+                        "name": {$correspondent->getFirstName()}
+                    },
+                    "timing": {
+                        "sent": window.API.Service.getTime(),
+                        "edited": null
+                    },
+                    "text": content,
+                    "read": true,
+                    "attachments": [],
+                    "_tuid": Math.ceil(performance.now())
+                };
+            }
+            
+            newMessage(content) {
+                let msg = this._newSelfMessage(content);
+                msg.timing.sent = "<img src=\"/assets/packages/static/openvk/img/loading_mini.gif\">";
+                this.addMessage(msg);
+                
+                return msg._tuid;
+            }
+            
+            newReply(content) {
+                let msg = this._newReplyMessage(content);
+                this.addMessage(msg);
+                
+                return msg._tuid;
+            }
+            
+            newReplies(replies) {
+                replies.forEach(this.newReply);
+            }
+            
+            sendMessage(content) {
+                const self = this;
+                if (self.CONVERSATION_ID) {
+                    var atts = self.pendingAttachments.slice();
+                    // include reply pseudo-attachment if present
+                    try { if (self.vm && typeof self.vm.replyTarget === 'function' && self.vm.replyTarget()) { atts.push({ type: 'reply', id: self.vm.replyTarget().uuid }); } } catch(e){}
+                    // immediately display own message in UI with reply quote
+                    try {
+                        var optimistic = self._newSelfMessage(escapeHtml(content));
+                        // include attachments preview into optimistic message
+                        try {
+                            var dispAtts = [];
+                            (atts || []).forEach(function(a){
+                                if (!a || !a.type) return;
+                                if (a.type === 'photo') {
+                                    var url = a.url || '';
+                                    dispAtts.push({ type: 'photo', link: url || '#', photo: { url: url || '/assets/packages/static/openvk/img/loading_mini.gif', caption: a.name || '' } });
+                                } else if (a.type === 'forward') {
+                                    dispAtts.push({ type: 'forward', sender: { name: '' }, text: '' });
+                                }
+                            });
+                            if (dispAtts.length) optimistic.attachments = dispAtts;
+                        } catch(e){}
+                        if (self.vm && typeof self.vm.replyTarget === 'function' && self.vm.replyTarget()) {
+                            var rt = self.vm.replyTarget();
+                            optimistic.reply = { uuid: rt.uuid, sender: { id: (rt.sender && rt.sender.id), name: (rt.sender && rt.sender.name) }, text: rt.text };
+                        }
+                        self.addMessage(optimistic);
+                    } catch(e) {}
+                    // send via site-native endpoint so DB schema matches history
+                    try {
+                        var fd = new FormData();
+                        fd.set('conversation_id', String(self.CONVERSATION_ID));
+                        fd.set('text', content);
+                        fd.set('hash', window.CSRF_HASH);
+                        (atts || []).forEach(function(att, idx){
+                            if (!att || !att.type || typeof att.id === 'undefined') return;
+                            fd.append('attachments['+idx+'][type]', att.type);
+                            fd.append('attachments['+idx+'][id]', String(att.id));
+                        });
+                        fetch('/messenger/api/conversations/send', { method:'POST', credentials:'same-origin', body: fd })
+                          .then(function(r){ return r.json(); })
+                          .then(function(j){
+                              try {
+                                  // set proper sent time on the last optimistic message
+                                  var arr = window.messages && window.messages();
+                                  if (arr && arr.length) {
+                                      var last = arr[arr.length - 1];
+                                      if (last && last.timing) {
+                                          last.timing.sent = (window.API && window.API.Service) ? window.API.Service.getTime() : (new Date()).toLocaleString();
+                                          if (window.messages && typeof window.messages.valueWillMutate === 'function') {
+                                              window.messages.valueWillMutate();
+                                              window.messages.valueHasMutated();
+                                          }
+                                      }
+                                  }
+                              } catch(e){}
+                          })
+                          .catch(function(){ /* ignore to keep UI responsive */ })
+                          .finally(function(){
+                              self.pendingAttachments = [];
+                              if (self.vm && typeof self.vm.attachments === 'function') self.vm.attachments([]);
+                              if (self.vm && typeof self.vm.replyTarget === 'function') self.vm.replyTarget(null);
+                          });
+                    } catch(e) {
+                        // clear pending anyway to avoid stuck UI
+                        self.pendingAttachments = [];
+                        if (self.vm && typeof self.vm.attachments === 'function') self.vm.attachments([]);
+                    }
+                    return;
+                }
+                let tempId = self.newMessage(escapeHtml(content));
+                let msgData = new FormData();
+                msgData.set("content", content);
+                msgData.set("hash", {$csrfToken});
+                // attach pending attachments for legacy messenger
+                (self.pendingAttachments || []).forEach(function(att, idx){
+                    msgData.append("attachments[" + idx + "][type]", att.type);
+                    msgData.append("attachments[" + idx + "][id]", String(att.id));
+                });
+                // include reply pseudo-attachment if present
+                try {
+                    if (self.vm && typeof self.vm.replyTarget === 'function' && self.vm.replyTarget()) {
+                        var rt = self.vm.replyTarget();
+                        var nextIdx = (self.pendingAttachments ? self.pendingAttachments.length : 0);
+                        msgData.append("attachments[" + nextIdx + "][type]", 'reply');
+                        msgData.append("attachments[" + nextIdx + "][id]", String(rt.uuid));
+                    }
+                } catch(e){}
+                let xhr  = new XMLHttpRequest();
+                xhr.open("POST", "/im/api/messages" + {$correspondent->getId()} + "/create.json", true);
+                xhr.onreadystatechange = (function() {
+                    if(this.readyState !== 4)
+                        return;
+                    else if(this.status !== 202) {
+                        self._patchMessage(tempId, {
+                            sender: {
+                                avatar: "/assets/packages/static/openvk/img/oof.apng",
+                                id: -1,
+                                link: "/support/manpages/messages/not-delivered.html",
+                                name: tr("messages_error_1")
+                            },
+                            text: tr("messages_error_1_description"),
+                            timing: {
+                                edited: null,
+                                sent: "???"
+                            },
+                            uuid: -4096
+                        });
+                        return;
+                    }
+                    self._patchMessage(tempId, JSON.parse(xhr.responseText));
+                    // clear attachments after successful send
+                    self.pendingAttachments = [];
+                    if (self.vm && typeof self.vm.attachments === 'function') self.vm.attachments([]);
+                });
+                xhr.send(msgData);
+            }
+
+            _wireAttachmentInput() {
+                var that = this;
+                function handleFiles(ev, type){
+                    var files = Array.prototype.slice.call(ev.target.files || []);
+                    files.forEach(function(f){
+                        var item = { name: f.name, progress: ko.observable(0), status: ko.observable('uploading') };
+                        if (that.vm && typeof that.vm.attachments === 'function') that.vm.attachments.push(item);
+                        var onProg = function(p){
+                            try { item.progress(Math.round(p * 100)); } catch(e){}
+                        };
+                        if (type === 'photo') {
+                            uploadPhoto(f, '', onProg).then(function(res){
+                                // prevent duplicates
+                                if (that.vm && typeof that.vm.isAlreadyAttached === 'function' && that.vm.isAlreadyAttached({ type: res.type, id: res.id })) {
+                                    try { item.status('done'); item.progress(100); } catch(e){}
+                                    return;
+                                }
+                                that.pendingAttachments.push({ type: res.type, id: res.id, name: f.name, url: (res.url || '') });
+                                try { item.id = res.id; item.type = res.type; } catch(e){}
+                                try { item.status('done'); item.progress(100); } catch(e){}
+                                // close picker if it was open
+                                try { if (that.vm && that.vm.pickerOpen && that.vm.pickerOpen()) that.vm.pickerOpen(false); } catch(e){}
+                            }).catch(function(){ try { item.status('error'); } catch(e){} });
+                        } else if (type === 'video') {
+                            uploadVideo(f, f.name, '', onProg).then(function(res){
+                                // prevent duplicates
+                                if (that.vm && typeof that.vm.isAlreadyAttached === 'function' && that.vm.isAlreadyAttached({ type: res.type, id: res.id })) {
+                                    try { item.status('done'); item.progress(100); } catch(e){}
+                                    return;
+                                }
+                                that.pendingAttachments.push({ type: res.type, id: res.id, name: f.name, url: (res.thumb || res.url || '') });
+                                try { item.id = res.id; item.type = res.type; } catch(e){}
+                                try { item.status('done'); item.progress(100); } catch(e){}
+                                // close picker if it was open
+                                try { if (that.vm && that.vm.pickerOpen && that.vm.pickerOpen()) that.vm.pickerOpen(false); } catch(e){}
+                            }).catch(function(){ try { item.status('error'); } catch(e){} });
+                        }
+                    });
+                }
+                var inPhoto = document.getElementById('attach-photo-input');
+                var inVideo = document.getElementById('attach-video-input');
+                if (inPhoto) inPhoto.addEventListener('change', function(ev){ handleFiles(ev, 'photo'); this.value=''; });
+                if (inVideo) inVideo.addEventListener('change', function(ev){ handleFiles(ev, 'video'); this.value=''; });
+            }
+        }
+        
+        (function(){
+            function init(){
+                if (!window.ko) { return; }
+                window.Msg = new Messenger([]);
+                try { adjustPadding(); } catch(e){}
+                try { window.addEventListener('resize', adjustPadding); } catch(e){}
+                try { window.addEventListener('orientationchange', adjustPadding); } catch(e){}
+                try {
+                  if (window.visualViewport) {
+                    visualViewport.addEventListener('resize', adjustPadding);
+                    visualViewport.addEventListener('scroll', adjustPadding);
+                  }
+                } catch(e){}
+            }
+            if (document.readyState === 'complete' || document.readyState === 'interactive') init();
+            else document.addEventListener('DOMContentLoaded', init);
+        })();
+        function adjustPadding(){
+            try{
+                var comp = document.querySelector('.messenger-app--input');
+                var list = document.querySelector('.messenger-app--messages');
+                var hdr  = document.getElementById('im-header');
+                if (!comp || !list) return;
+
+                // detect bottom-fixed site navbar height (excluding composer itself)
+                var navH = 0;
+                try {
+                    var nodes = document.body.getElementsByTagName('*');
+                    for (var i=0;i<nodes.length;i++) {
+                        var el = nodes[i];
+                        if (el === comp) continue;
+                        var cs = window.getComputedStyle(el);
+                        if (!cs) continue;
+                        if (cs.position === 'fixed') {
+                            var b = parseInt(cs.bottom||'0',10);
+                            if (isNaN(b)) b = 0;
+                            if (b <= 1) { // anchored to bottom
+                                var h = el.offsetHeight || 0;
+                                // ignore tiny overlays
+                                if (h > navH && h < (window.innerHeight*0.5)) navH = h;
+                            }
+                        }
+                    }
+                } catch(e){}
+
+                // browser UI safe area / keyboard overlap (iOS toolbars)
+                var extra = 0;
+                try { if (window.visualViewport) extra = Math.max(0, (window.innerHeight - visualViewport.height)); } catch(e){}
+
+                // apply bottom offset for composer and translate above iOS toolbar
+                try {
+                  comp.style.bottom = (navH + (window.CSS && CSS.supports('height: env(safe-area-inset-bottom)') ? 0 : 0)) + 'px';
+                  comp.style.transform = extra ? ('translateY(-' + extra + 'px)') : 'translateY(0)';
+                } catch(e){}
+
+                // padding for list so last message is visible above composer+navbar
+                var h = comp.offsetHeight || 88;
+                // When we translate the composer up by `extra`, we should NOT add it to padding
+                list.style.paddingBottom = (navH + h + 24) + 'px';
+                var topH = 0; try { topH = (hdr && hdr.offsetHeight) ? hdr.offsetHeight : 56; } catch(e){}
+                var root = (document.documentElement || document.body);
+                try {
+                  root.style.setProperty('--composer-h', (navH + h + 24) + 'px');
+                  root.style.setProperty('--messages-top', topH + 'px');
+                  root.style.setProperty('--bottom-gap', (navH + h + 8) + 'px');
+                } catch(e){}
+                // Ensure we can see the latest messages after layout changes
+                try { list.scrollTop = list.scrollHeight; } catch(e){}
+            }catch(e){}
+        }
+    </script>
+{/block}

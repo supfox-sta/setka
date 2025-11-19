@@ -1,0 +1,387 @@
+{extends "../@layout.xml"}
+{block title}API: Музыка{/block}
+{block header}{/block}
+{block content}
+<div style="display:block;">
+  <main style="max-width:1100px;margin:0 auto;padding:16px;">
+    <!-- Breadcrumb -->
+    <div style="margin-bottom:16px;">
+      <a href="/dev-api" style="color:#3b82f6;">← Назад к API</a>
+    </div>
+
+    <!-- Header -->
+    <div style="margin-bottom:24px;">
+      <h1 style="font-size:32px;font-weight:800;margin-bottom:8px;">Музыка</h1>
+      <p style="color:#6b7280;">Методы для работы с аудиозаписями, плейлистами, загрузкой и управлением музыкой</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:24px;">
+      <!-- Main content -->
+      <div style="display:flex;flex-direction:column;gap:24px;">
+
+        <!-- audio.get -->
+        <div id="get" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">audio.get</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение списка аудиозаписей пользователя или группы.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца (положительный - пользователь, отрицательный - группа)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество аудиозаписей (макс. 100)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение для постраничной навигации</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/audio.get.json?owner_id=1&count=20</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 150,
+  "items": [{
+    "id": 123456,
+    "owner_id": 1,
+    "artist": "Исполнитель",
+    "title": "Название трека",
+    "duration": 180,
+    "url": "https://...",
+    "lyrics_id": 789,
+    "genre_id": 1,
+    "date": 1609459200,
+    "album": {
+      "id": 123,
+      "title": "Название альбома",
+      "owner_id": 1
+    }
+  }]
+}</pre>
+          </div>
+        </div>
+
+        <!-- audio.add -->
+        <div id="add" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">audio.add</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Добавление аудиозаписи в свою коллекцию.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">audio_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID аудиозаписи</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца аудиозаписи</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/audio.add.json?audio_id=123456</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;">1 // Успешно</pre>
+          </div>
+        </div>
+
+        <!-- audio.delete -->
+        <div id="delete" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">audio.delete</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Удаление аудиозаписи из своей коллекции.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">audio_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID аудиозаписи</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца аудиозаписи</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/audio.delete.json?audio_id=123456</code>
+          </div>
+        </div>
+
+        <!-- audio.search -->
+        <div id="search" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">audio.search</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Поиск аудиозаписей по запросу.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">q</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— Поисковый запрос</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество результатов (макс. 300)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">genre</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID жанра</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">sort</code>
+                <span style="color:#6b7280;margin-left:8px;">— Сортировка (2 - по популярности)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/audio.search.json?q=Queen&count=50</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 150,
+  "items": [{
+    "id": 123456,
+    "owner_id": 1,
+    "artist": "Queen",
+    "title": "Bohemian Rhapsody",
+    "duration": 355,
+    "url": "https://...",
+    "genre_id": 1
+  }]
+}</pre>
+          </div>
+        </div>
+
+        <!-- audio.getPlaylists -->
+        <div id="getplaylists" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">audio.getPlaylists</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение списка плейлистов пользователя или группы.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">owner_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID владельца плейлистов</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество плейлистов (макс. 50)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/audio.getPlaylists.json?owner_id=1&count=20</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 5,
+  "items": [{
+    "id": 123,
+    "owner_id": 1,
+    "title": "Мой плейлист",
+    "description": "Описание плейлиста",
+    "count": 25,
+    "photo": {
+      "photo_300": "https://...",
+      "photo_600": "https://..."
+    }
+  }]
+}</pre>
+          </div>
+        </div>
+
+        <!-- audio.createPlaylist -->
+        <div id="createplaylist" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">audio.createPlaylist</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Создание нового плейлиста.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">title</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— Название плейлиста</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">description</code>
+                <span style="color:#6b7280;margin-left:8px;">— Описание плейлиста</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">audio_ids</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID аудиозаписей через запятую</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">group_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID группы для создания плейлиста группы</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/audio.createPlaylist.json?title=Моя музыка&audio_ids=123,456,789</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "playlist_id": 123,
+  "owner_id": 1
+}</pre>
+          </div>
+        </div>
+
+        <!-- audio.edit -->
+        <div id="edit" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">audio.edit</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Редактирование информации об аудиозаписи.</p>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">audio_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID аудиозаписи</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">artist</code>
+                <span style="color:#6b7280;margin-left:8px;">— Новый исполнитель</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">title</code>
+                <span style="color:#6b7280;margin-left:8px;">— Новое название</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">text</code>
+                <span style="color:#6b7280;margin-left:8px;">— Текст песни</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">genre_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID жанра</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/audio.edit.json?audio_id=123456&artist=Новый исполнитель&title=Новое название</code>
+          </div>
+        </div>
+
+        <!-- Audio covers -->
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;background:#f9fafb;">
+          <div style="font-weight:700;margin-bottom:12px;font-size:16px;">🎵 Обложки треков</div>
+          <div style="display:grid;gap:12px;font-size:14px;">
+            <div>
+              <strong>Загрузка обложки:</strong> При загрузке аудиозаписи можно прикрепить изображение обложки через параметр <code>cover</code> (multipart/form-data)
+            </div>
+            <div>
+              <strong>Изменение обложки:</strong> Используйте <code>audio.edit</code> с новым файлом обложки
+            </div>
+            <div>
+              <strong>Форматы:</strong> Поддерживаются JPG, PNG, GIF (макс. размер 10MB)
+            </div>
+            <div>
+              <strong>Размеры:</strong> Рекомендуется квадратное изображение 500x500px или больше
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside style="position:sticky;top:12px;">
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;">
+          <div style="font-weight:700;margin-bottom:12px;">На этой странице</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+            <li><a href="#get" style="color:#3b82f6;font-size:14px;">get</a></li>
+            <li><a href="#add" style="color:#3b82f6;font-size:14px;">add</a></li>
+            <li><a href="#delete" style="color:#3b82f6;font-size:14px;">delete</a></li>
+            <li><a href="#search" style="color:#3b82f6;font-size:14px;">search</a></li>
+            <li><a href="#getplaylists" style="color:#3b82f6;font-size:14px;">getPlaylists</a></li>
+            <li><a href="#createplaylist" style="color:#3b82f6;font-size:14px;">createPlaylist</a></li>
+            <li><a href="#edit" style="color:#3b82f6;font-size:14px;">edit</a></li>
+          </ul>
+        </div>
+
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+          <div style="font-weight:700;margin-bottom:12px;">Другие разделы</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+            <li><a href="/dev-api/auth" style="color:#6b7280;font-size:14px;">Авторизация</a></li>
+            <li><a href="/dev-api/messages" style="color:#6b7280;font-size:14px;">Сообщения</a></li>
+            <li><a href="/dev-api/users" style="color:#6b7280;font-size:14px;">Пользователи</a></li>
+            <li><a href="/dev-api/groups" style="color:#6b7280;font-size:14px;">Группы</a></li>
+            <li><a href="/dev-api/photos" style="color:#6b7280;font-size:14px;">Фото</a></li>
+            <li><a href="/dev-api/videos" style="color:#6b7280;font-size:14px;">Видео</a></li>
+            <li><a href="/dev-api/feed" style="color:#6b7280;font-size:14px;">Новости</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+  </main>
+</div>

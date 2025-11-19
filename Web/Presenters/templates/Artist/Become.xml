@@ -1,0 +1,50 @@
+{extends "../@layout.xml"}
+
+{block title}
+    Стать исполнителем
+{/block}
+
+{block header}
+    <a href="/audios/home">Аудиозаписи</a>
+    »
+    Стать исполнителем
+{/block}
+
+{block content}
+    <div class="container_gray" style="border:0;margin-top:-10px;">
+        <div class="content_block">
+            <h3>Подать заявку на статус исполнителя</h3>
+            <p style="opacity:.85;">Заполните форму ниже. Заявка отправится в Поддержку и будет рассмотрена модераторами.</p>
+
+            <form method="post" action="/support?act=new" class="aui" enctype="application/x-www-form-urlencoded">
+                <input type="hidden" name="hash" value="{$csrfToken}" />
+                <input type="hidden" name="name" value="Заявка: Стать исполнителем" />
+                <input type="hidden" name="text" id="become_artist_payload" />
+
+                <div class="field-group">
+                    <label for="artist_name">Имя исполнителя</label>
+                    <input class="text long-field" type="text" id="artist_name" maxlength="120" required />
+                </div>
+
+                <div class="field-group">
+                    <label for="artist_bio">Био (кратко)</label>
+                    <textarea class="textarea long-field" id="artist_bio" rows="4" placeholder="Пара предложений о проекте/артисте"></textarea>
+                </div>
+
+                <div class="buttons-container">
+                    <div class="buttons">
+                        <input class="button submit" type="submit" value="Отправить заявку" onclick="(function(){
+                            var n=document.getElementById('artist_name').value.trim();
+                            var b=document.getElementById('artist_bio').value.trim();
+                            var profile='{$thisUser ? $thisUser->getURL() : ''}';
+                            var payload = 'Имя исполнителя: '+n+'\n'+(b?('Био: '+b+'\n'):'')+'Профиль: '+(profile? (window.location.origin+profile) : 'гость');
+                            document.getElementById('become_artist_payload').value = payload;
+                        })()" />
+                    </div>
+                </div>
+            </form>
+
+            <div style="opacity:.7;margin-top:8px;">После отправки вы сможете отслеживать статус заявки в разделе «Поддержка».</div>
+        </div>
+    </div>
+{/block}

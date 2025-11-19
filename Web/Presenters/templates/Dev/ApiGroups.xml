@@ -1,0 +1,207 @@
+{extends "../@layout.xml"}
+{block title}API: Группы{/block}
+{block header}{/block}
+{block content}
+<div style="display:block;">
+  <main style="max-width:1100px;margin:0 auto;padding:16px;">
+    <!-- Breadcrumb -->
+    <div style="margin-bottom:16px;">
+      <a href="/dev-api" style="color:#3b82f6;">← Назад к API</a>
+    </div>
+    <!-- Header -->
+    <div style="margin-bottom:24px;">
+      <h1 style="font-size:32px;font-weight:800;margin-bottom:8px;">Группы</h1>
+      <p style="color:#6b7280;">Методы для работы с сообществами и группами</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:24px;">
+      <!-- Main content -->
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        <!-- Пример метода -->
+        <!-- Получение списка групп -->
+        <div id="get-groups" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.get</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Получение списка групп пользователя.</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>user_id</code> — ID пользователя (по умолчанию текущий)</li>
+              <li><code>fields</code> — дополнительные поля (например, photo_50, members_count)</li>
+              <li><code>offset</code>, <code>count</code> — пагинация</li>
+              <li><code>online</code> — только онлайн</li>
+              <li><code>filter</code> — фильтр (groups/admin)</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>GET /method/groups.get?user_id=123&fields=photo_50,members_count</code>
+          </div>
+        </div>
+        <!-- Получение информации о группе -->
+        <div id="get-by-id" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.getById</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Получение информации о группе по её ID или screen_name.</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>group_ids</code> — список ID или screen_name через запятую</li>
+              <li><code>fields</code> — дополнительные поля</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>GET /method/groups.getById?group_ids=club1,club2&fields=photo_50,description</code>
+          </div>
+        </div>
+        <!-- Поиск групп -->
+        <div id="search" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.search</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Поиск групп по названию или описанию.</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>q</code> — поисковый запрос</li>
+              <li><code>offset</code>, <code>count</code> — пагинация</li>
+              <li><code>fields</code> — дополнительные поля</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>GET /method/groups.search?q=музыка&count=10</code>
+          </div>
+        </div>
+        <!-- Вступить в группу -->
+        <div id="join" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#f0fdf4;color:#15803d;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.join</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Вступить в группу по её ID.</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>group_id</code> — ID группы</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>POST /method/groups.join<br/>group_id=123</code>
+          </div>
+        </div>
+        <!-- Покинуть группу -->
+        <div id="leave" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fef2f2;color:#991b1b;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.leave</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Покинуть группу по её ID.</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>group_id</code> — ID группы</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>POST /method/groups.leave<br/>group_id=123</code>
+          </div>
+        </div>
+        <!-- Редактирование группы -->
+        <div id="edit" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.edit</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Редактирование параметров группы (название, описание, сайт и др.).</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>group_id</code> — ID группы</li>
+              <li><code>title</code>, <code>description</code>, <code>screen_name</code>, <code>website</code> — новые значения</li>
+              <li><code>wall</code>, <code>topics</code>, <code>audio</code> — настройки</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>POST /method/groups.edit<br/>group_id=123&title=Новая группа&description=Описание</code>
+          </div>
+        </div>
+        <!-- Получение участников группы -->
+        <div id="get-members" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.getMembers</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Получение списка участников группы.</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>group_id</code> — ID группы</li>
+              <li><code>offset</code>, <code>count</code> — пагинация</li>
+              <li><code>fields</code> — дополнительные поля</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>GET /method/groups.getMembers?group_id=123&count=20</code>
+          </div>
+        </div>
+        <!-- Получение настроек группы -->
+        <div id="get-settings" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.getSettings</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Получение настроек группы.</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>group_id</code> — ID группы</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>GET /method/groups.getSettings?group_id=123</code>
+          </div>
+        </div>
+        <!-- Проверка участника -->
+        <div id="is-member" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">/method/groups.isMember</code>
+          </div>
+          <div style="color:#64748b;margin-bottom:8px;">Проверка, состоит ли пользователь в группе.</div>
+          <div style="margin-bottom:8px;">
+            <b>Параметры:</b>
+            <ul style="margin:0;padding-left:16px;">
+              <li><code>group_id</code> — ID группы</li>
+              <li><code>user_id</code> — ID пользователя</li>
+              <li><code>extended</code> — подробный ответ</li>
+            </ul>
+          </div>
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+            <b>Пример:</b>
+            <code>GET /method/groups.isMember?group_id=123&user_id=456</code>
+          </div>
+        </div>
+      </div>
+      <!-- Sidebar -->
+      <aside style="position:sticky;top:12px;border:1px solid #e5e7eb;border-radius:12px;padding:12px;">
+        <div style="font-weight:700;margin-bottom:8px;">Методы</div>
+        <ul style="list-style:none;margin:0;padding:0;display:grid;gap:6px;">
+          <li><a href="#get-groups">Получение групп</a></li>
+          <!-- Добавьте другие ссылки на методы -->
+        </ul>
+      </aside>
+    </div>
+  </main>
+</div>
+{/block}

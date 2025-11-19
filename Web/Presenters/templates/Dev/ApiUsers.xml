@@ -1,0 +1,294 @@
+{extends "../@layout.xml"}
+{block title}API: Пользователи{/block}
+{block header}{/block}
+{block content}
+<div style="display:block;">
+  <main style="max-width:1100px;margin:0 auto;padding:16px;">
+    <!-- Breadcrumb -->
+    <div style="margin-bottom:16px;">
+      <a href="/dev-api" style="color:#3b82f6;">← Назад к API</a>
+    </div>
+
+    <!-- Header -->
+    <div style="margin-bottom:24px;">
+      <h1 style="font-size:32px;font-weight:800;margin-bottom:8px;">Пользователи</h1>
+      <p style="color:#6b7280;">Методы для получения информации о пользователях, поиска и работы с профилями</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:24px;">
+      <!-- Main content -->
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        
+        <!-- users.get -->
+        <div id="get" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">users.get</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение информации о пользователях по их ID.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">user_ids</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID пользователей через запятую (по умолчанию текущий пользователь)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">fields</code>
+                <span style="color:#6b7280;margin-left:8px;">— Дополнительные поля (см. ниже)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение для выборки</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество пользователей (макс. 100)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Доступные поля (fields):</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;font-size:13px;color:#6b7280;line-height:1.6;">
+              verified, sex, has_photo, photo_50, photo_100, photo_200, photo_max, photo_max_orig, status, screen_name, friend_status, last_seen, music, movies, tv, books, city, interests, quotes, games, email, telegram, about, rating, counters, correct_counters, guid, background, reg_date, is_dead, nickname, blacklisted_by_me, blacklisted, custom_fields, bdate
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/users.get.json?user_ids=1,2&fields=photo_100,city,status</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">[{
+  "id": 1,
+  "first_name": "Иван",
+  "last_name": "Петров",
+  "is_closed": false,
+  "can_access_closed": true,
+  "photo_100": "https://...",
+  "city": "Москва",
+  "status": "В сети",
+  "online": 1
+}]</pre>
+          </div>
+        </div>
+
+        <!-- users.search -->
+        <div id="search" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">users.search</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Поиск пользователей по различным параметрам.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">q</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— Поисковый запрос</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">fields</code>
+                <span style="color:#6b7280;margin-left:8px;">— Дополнительные поля</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение (по умолчанию 0)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество результатов (макс. 100)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">city</code>
+                <span style="color:#6b7280;margin-left:8px;">— Город</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">hometown</code>
+                <span style="color:#6b7280;margin-left:8px;">— Родной город</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">sex</code>
+                <span style="color:#6b7280;margin-left:8px;">— Пол (0-любой, 1-жен., 2-муж., 3-не указ.)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">status</code>
+                <span style="color:#6b7280;margin-left:8px;">— Семейное положение</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">online</code>
+                <span style="color:#6b7280;margin-left:8px;">— true - только онлайн</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">sort</code>
+                <span style="color:#6b7280;margin-left:8px;">— Сортировка (0-по ID, 1-по ID desc, 4-по рейтингу)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">interests</code>
+                <span style="color:#6b7280;margin-left:8px;">— Интересы</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">fav_music</code>
+                <span style="color:#6b7280;margin-left:8px;">— Любимая музыка</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/users.search.json?q=Иван&city=Москва&count=20</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 150,
+  "items": [{ /* массив пользователей */ }]
+}</pre>
+          </div>
+        </div>
+
+        <!-- users.getFollowers -->
+        <div id="getfollowers" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">users.getFollowers</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение списка подписчиков пользователя.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">user_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID пользователя</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">fields</code>
+                <span style="color:#6b7280;margin-left:8px;">— Дополнительные поля</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение (по умолчанию 0)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество подписчиков (макс. 100)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/users.getFollowers.json?user_id=123&count=20</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 50,
+  "items": [1, 2, 3] // массив ID подписчиков
+}</pre>
+          </div>
+        </div>
+
+        <!-- users.report -->
+        <div id="report" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">users.report</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Подача жалобы на пользователя.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">user_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID пользователя</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">type</code>
+                <span style="color:#6b7280;margin-left:8px;">— Тип жалобы (по умолчанию "spam")</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">comment</code>
+                <span style="color:#6b7280;margin-left:8px;">— Комментарий к жалобе</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/users.report.json?user_id=123&type=spam&comment=Спам в сообщениях</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;">1 // Успешно</pre>
+          </div>
+        </div>
+
+        <!-- Field descriptions -->
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;background:#f9fafb;">
+          <div style="font-weight:700;margin-bottom:12px;font-size:16px;">📋 Описание дополнительных полей</div>
+          <div style="display:grid;gap:12px;font-size:14px;">
+            <div>
+              <code style="background:#fff;padding:2px 6px;border-radius:4px;">counters</code>
+              <span style="color:#6b7280;margin-left:8px;">— Счетчики (друзья, фото, видео, аудио, заметки)</span>
+            </div>
+            <div>
+              <code style="background:#fff;padding:2px 6px;border-radius:4px;">friend_status</code>
+              <span style="color:#6b7280;margin-left:8px;">— Статус дружбы (0-не друг, 1-заявка отправлена, 2-входящая заявка, 3-друзья)</span>
+            </div>
+            <div>
+              <code style="background:#fff;padding:2px 6px;border-radius:4px;">last_seen</code>
+              <span style="color:#6b7280;margin-left:8px;">— Время последнего посещения и платформа</span>
+            </div>
+            <div>
+              <code style="background:#fff;padding:2px 6px;border-radius:4px;">bdate</code>
+              <span style="color:#6b7280;margin-left:8px;">— Дата рождения (зависит от настроек приватности)</span>
+            </div>
+            <div>
+              <code style="background:#fff;padding:2px 6px;border-radius:4px;">rating</code>
+              <span style="color:#6b7280;margin-left:8px;">— Рейтинг пользователя</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside style="position:sticky;top:12px;">
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;">
+          <div style="font-weight:700;margin-bottom:12px;">На этой странице</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+            <li><a href="#get" style="color:#3b82f6;font-size:14px;">get</a></li>
+            <li><a href="#search" style="color:#3b82f6;font-size:14px;">search</a></li>
+            <li><a href="#getfollowers" style="color:#3b82f6;font-size:14px;">getFollowers</a></li>
+            <li><a href="#report" style="color:#3b82f6;font-size:14px;">report</a></li>
+          </ul>
+        </div>
+
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+          <div style="font-weight:700;margin-bottom:12px;">Другие разделы</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+            <li><a href="/dev-api/auth" style="color:#6b7280;font-size:14px;">Авторизация</a></li>
+            <li><a href="/dev-api/messages" style="color:#6b7280;font-size:14px;">Сообщения</a></li>
+            <li><a href="/dev-api/groups" style="color:#6b7280;font-size:14px;">Группы</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+  </main>
+</div>
+{/block}

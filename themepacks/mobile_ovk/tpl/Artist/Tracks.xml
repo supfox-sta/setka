@@ -1,0 +1,49 @@
+{extends "../@layout.xml"}
+
+{block title}
+    {$artist->getName()} — Треки
+{/block}
+
+{block titleHeader}
+    {$artist->getName()}
+{/block}
+
+{block body}
+    <div class="artistPage" style="padding:10px;display:flex;flex-direction:column;gap:12px;">
+        <!-- Header: avatar + name/bio to the right -->
+        <section style="display:flex;gap:12px;align-items:center;">
+            <div style="flex:0 0 72px;width:72px;height:72px;border-radius:9999px;overflow:hidden;background:#111827;border:1px solid rgba(255,255,255,0.08);">
+                <img n:if="$artistAvatarUrl" n:attr="src => $artistAvatarUrl, alt => $artist->getName()" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:18px;font-weight:700;">{$artist->getName()}</div>
+                <div style="margin-top:4px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" n:if="$artist->getBio()">{$artist->getBio()}</div>
+                <div style="margin-top:4px;opacity:.8;font-size:12px;">
+                    {var $tc = isset($tracksCount) ? $tracksCount : (isset($tracks) ? sizeof($tracks) : 0)}
+                    {var $ac = isset($albumsCount) ? $albumsCount : 0}
+                    {$tc} треков{if $ac > 0} • {$ac} альбомов{/if}
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs -->
+        <div class="audioTabs" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a id="ki" href="/artist{$artist->getId()}" style="text-decoration:none;">Главная</a>
+            <a n:attr="id => 'used'" href="/artist{$artist->getId()}/tracks" style="text-decoration:none;">Все треки ({isset($tracksCount) ? $tracksCount : (isset($tracks) ? sizeof($tracks) : 0)})</a>
+            <a id="ki" href="/artist{$artist->getId()}/albums" style="text-decoration:none;">Альбомы ({isset($albumsCount) ? $albumsCount : 0})</a>
+        </div>
+
+        <!-- Tracks list -->
+        <section>
+            <div n:if="$tracksCount <= 0" style='opacity:.75;'>Треков пока нет.</div>
+            <div n:if="$tracksCount > 0" class="infContainer">
+                <div class="infObj" n:foreach="$tracks as $audio">
+                    {include "../Audio/player.xml", audio => $audio}
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom spacing for tabbar -->
+        <div style="height:88px;"></div>
+    </div>
+{/block}

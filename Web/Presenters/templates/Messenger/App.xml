@@ -1,0 +1,1658 @@
+{extends "../@layout.xml"}
+{block title}{if isset($convId) && $convId}{$groupTitle}{else}{$correspondent->getCanonicalName()}{/if}{/block}
+
+{block header}
+    {if isset($convId) && $convId}
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <img id="group_avatar_img" src="{isset($groupAvatarUrl) && $groupAvatarUrl ? $groupAvatarUrl : '/assets/packages/static/openvk/img/dialog_group.png'}" alt="Group" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />
+            <div style="display:flex;flex-direction:column;">
+                <span id="group_title_span" style="font-weight:600;">{$groupTitle}</span>
+                <span style="color:#6b7280;font-size:12px;">{_group_chat}</span>
+            </div>
+            <span style="margin-left:auto; display:inline-flex; gap:6px;">
+                <button class="button" id="open-group-settings" data-bind="visible: canOwner(), click: function(){ $root.openSettings(); }">{_edit_group}</button>
+                <button class="button" id="leave-group" data-bind="visible: (myRole && myRole() !== 'owner'), click: function(){ $root.leaveConversation(); }">{_leave_group}</button>
+            </span>
+        </div>
+    {else}
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+            <a href="/im" style="text-decoration:none;color:#6b7280;">{_my_messages}</a>
+            <span>»</span>
+            <img src="{$correspondent->getAvatarUrl('miniscule')}" alt="{$correspondent->getCanonicalName()}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />
+            <div style="display:flex;flex-direction:column;">
+                <a href="{$correspondent->getURL()}" style="font-weight:600;text-decoration:none;">{$correspondent->getCanonicalName()}</a>
+                <span style="color:#6b7280;font-size:12px;">
+                    {var $online = $correspondent->getOnline()}
+                    {$correspondent->isFemale() ? tr("was_online_f") : tr("was_online_m")} {$online}
+                </span>
+            </div>
+        </div>
+    {/if}
+{/block}
+
+{block wrap}
+    <div class="messenger-app">
+        <style>
+            .messenger-app { background:#fff; display:flex; flex-direction:column; overflow:hidden; height:calc(100vh - 160px); min-height:520px; }
+            .messenger-app--messages { flex:1 1 auto; padding:10px 16px; overflow:auto; }
+            .messenger-app--messages---message { display:flex; align-items:flex-start; justify-content:flex-start; gap:8px; margin:12px 0; width:100%; position:relative; }
+            .messenger-app--messages---message.mine ._content { margin-left:auto; }
+            .messenger-app--messages---message.mine .ava { display:none; }
+            .messenger-app--messages---message .ava { width:38px; height:38px; border-radius:3px; object-fit:cover; }
+            .messenger-app--messages---message ._content { position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:4px; max-width:660px; width:auto; padding:10px 84px 10px 12px; background:#ffffff; border:1px solid #dbe2ec; border-radius:4px; box-shadow:0 1px 0 rgba(0,0,0,0.03); min-width:320px; }
+            .messenger-app--messages---message ._content:before { content:""; position:absolute; left:-8px; top:16px; width:0; height:0; border-top:8px solid transparent; border-bottom:8px solid transparent; border-right:8px solid #dbe2ec; }
+            .messenger-app--messages---message ._content:after { content:""; position:absolute; left:-7px; top:17px; width:0; height:0; border-top:7px solid transparent; border-bottom:7px solid transparent; border-right:7px solid #ffffff; }
+            .messenger-app--messages---message.mine ._content { align-items:flex-end; background:#eff5ff; border-color:#c7d6f5; }
+            .messenger-app--messages---message.mine ._content:before { left:auto; right:-8px; border-right:none; border-left:8px solid #c7d6f5; }
+            .messenger-app--messages---message.mine ._content:after { left:auto; right:-7px; border-right:none; border-left:7px solid #eff5ff; }
+            .messenger-app--messages---message ._bubble { display:block; background:transparent; border:none; border-radius:0; padding:0; max-width:100%; margin-top:0; box-shadow:none; width:100%; }
+            .messenger-app--messages---message .reply-quote { background:#f9fafb; border-color:#e5e7eb; border-radius:6px; padding:4px 6px; font-size:12px; }
+            .messenger-app--messages---message .attachments img { border-radius:3px; max-width:200px; width:100%; height:auto; object-fit:cover; border:1px solid #ccd6e5; padding:2px; background:#fff; }
+            .messenger-app--messages---message ._bubble .text { white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere; font-size:13px; line-height:1.38; }
+            .messenger-app--messages---message .time { color:#6b7280; font-size:12px; }
+            .messenger-app--messages---message .message-meta { position:absolute; top:4px; right:10px; display:flex; align-items:center; gap:4px; color:#7a8596; font-size:11px; }
+            .messenger-app--messages---message.mine .message-meta { right:10px; }
+            .messenger-app--messages---message.selected ._content { border-color:#c7dbff; background:#f3f7ff; }
+            .msg-select { display:none; }
+            #msg-action-menu { position:fixed; z-index:10000; background:#fff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.12); padding:6px; display:none; }
+            #msg-action-menu.open { display:block; }
+            .messenger-app--input { position:sticky; bottom:0; background:#f1f4fb; padding:12px 16px; border-top:1px solid #cbd6eb; width:100%; box-sizing:border-box; flex:0 0 auto; height:135px!important; }
+            .messenger-app--input .button { border-radius:3px; }
+            .icon-btn { width:34px; height:34px; border:1px solid #d9dee7; background:#fff; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; }
+            .date-label { display:inline-block; padding:2px 8px; background:#f3f4f6; color:#6b7280; border:1px solid #e5e7eb; border-radius:999px; font-size:12px; line-height:1; }
+            .message-meta .date-label { margin-right:8px; }
+            .composer { width:100%; box-sizing:border-box; display:flex; align-items:flex-start; gap:12px; padding:10px 12px; border:1px solid #c5d2e9; border-radius:3px; background:#ffffff; box-shadow:none; }
+            .composer .me-ava { width:42px; height:42px; border-radius:3px; object-fit:cover; border:1px solid #d2daec; }
+            .composer-textwrap { flex:1 1 auto; position:relative; }
+            .composer textarea { width:100%; min-height:78px; max-height:210px; padding:10px 12px; resize:none; border:1px solid #cbd4e6; outline:none; background:#fff; box-sizing:border-box; overflow:hidden; border-radius:3px; font-size:13px; line-height:1.42; }
+            .composer textarea:focus { border-color:#97b3e4; box-shadow:0 0 0 2px rgba(151,179,228,0.18); }
+            .composer-actions { display:flex; flex-direction:column; gap:6px; margin-left:6px; align-items:flex-end; }
+            .composer-actions .icon-btn { width:34px; height:34px; border:1px solid #cdd6ea; border-radius:4px; background:#f7f9ff; color:#496297; font-size:16px; cursor:pointer; }
+            .composer-actions .icon-btn:hover { background:#eef3ff; }
+            .composer-actions .send-btn { padding:6px 16px; min-width:90px; border:1px solid #97b3e4; border-radius:4px; background:linear-gradient(#eef4ff,#dce6fb); color:#2a4887; font-size:13px; font-weight:600; cursor:pointer; }
+            .composer-actions .send-btn:hover { background:linear-gradient(#f6f9ff,#e6efff); }
+            .composer-actions .send-btn:disabled { opacity:0.6; cursor:default; background:#f8faff; }
+            .composer-actions .attach-wrap { position:relative; display:flex; flex-direction:column; align-items:center; width:100%; }
+            .composer-actions .attach-link { margin-top:2px; }
+            .attach-preview { width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:6px; margin:0; }
+            .attach-chip { display:flex; align-items:flex-start; gap:10px; background:#f3f6fb; border:1px solid #dee6f5; border-left:3px solid #93c5fd; border-radius:4px; padding:8px 10px; max-width:100%; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+            .attach-chip img { display:none; }
+            .attach-chip .name { font-size:13px; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:360px; font-weight:600; }
+            .attach-chip .meta { font-size:12px; color:#6b7280; margin-left:4px; white-space:nowrap; }
+            .attach-chip .status { font-size:12px; color:#10b981; margin-left:auto; }
+            .attach-chip .remove { color:#6b7280; text-decoration:none; font-size:16px; line-height:1; padding:0 4px; background:none; border:none; cursor:pointer; }
+            .attach-link { color:#2a5885; text-decoration:none; font-weight:600; }
+            .attach-link:hover { text-decoration:underline; }
+            .messenger-app--input---messagebox { position:relative; display:flex; flex-direction:column; gap:8px; width:100%; box-sizing:border-box; }
+            .reply-preview { border-left:3px solid #93c5fd; background:#f3f6fb; padding:8px 10px; border-radius:4px; display:flex; align-items:flex-start; gap:10px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+            .reply-preview-dismiss { text-decoration:none; color:#6b7280; font-size:18px; line-height:1; }
+            .attach-wrap { position:relative; display:inline-block; }
+            .attach-wrap #attach-menu { position:absolute; right:0; bottom:100%; margin-bottom:6px; background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:6px; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+            .msg-author { font-weight:600; font-size:13px; color:#2a5885; margin-bottom:2px; }
+            .msg-author.self { color:#6b7280; }
+            .composer-overlays { position:absolute; left:0; right:0; bottom:100%; display:flex; flex-direction:column; gap:8px; z-index:2; }
+        </style>
+        <!-- Floating action menu near click (inside Knockout root) -->
+        <div id="msg-action-menu" n:syntax="off" data-bind="css: { open: actionMenuOpen }, style: { left: actionMenuPos().x + 'px', top: actionMenuPos().y + 'px' }" onclick="event.stopPropagation();" onmousedown="event.stopPropagation();">
+            <div style="display:flex;flex-direction:column;gap:6px;min-width:160px;">
+                <button class="button" data-bind="click: function(){ $root.setReply($root.actionTarget()); $root.closeActionMenu(); }">Ответить</button>
+                <button class="button" data-bind="click: function(){ $root.openForwardPicker(); $root.closeActionMenu(); }">Переслать</button>
+                <button class="button" data-bind="click: function(){ $root.deleteOne($root.actionTarget()); }">Удалить</button>
+                <button class="button" data-bind="click: function(){ $root.selectOne($root.actionTarget()); }">Выбрать</button>
+            </div>
+        </div>
+        <!-- Selection action bar (yellow box) -->
+        <div style="background:#fff9c4;border:1px solid #f6e05e;border-radius:6px;padding:8px 10px;margin-bottom:8px;display:none;" data-bind="visible: hasSelection && hasSelection(), with: $root">
+            <span data-bind="text: tr('_selected_count').replace('$1', selectedCount())"></span>
+            <span style="float:right;display:inline-flex;gap:6px;">
+                <button class="button" data-bind="click: openForwardPicker">{_forward_messages}</button>
+                <button class="button" data-bind="click: deleteSelected">{_delete_messages}</button>
+                <button class="button" data-bind="click: clearSelection">{_clear_selection}</button>
+            </span>
+        </div>
+        <div class="messenger-app--messages" n:attr="data-bind => 'event: { scroll: onMessagesScroll }'">
+            <div data-bind="foreach: messages">
+                <div class="messenger-app--messages---message" n:attr="data-bind => 'css: { unread: !$data.read, mine: ($data.sender && $data.sender.id === window.CURRENT_USER_ID), selected: $root.isSelected(($data.uuid || $data.id)) }'" data-bind="click: function(_, e){ $root.onMessageClick($data, e); }, event: { contextmenu: function(d, e){ e.preventDefault(); $root.onMessageClick(d, e); } }" style="cursor:pointer;">
+                    <input type="checkbox" class="msg-select" style="margin-right:6px;" data-bind="visible: typeof $data.uuid !== 'undefined', checked: $root.isSelected($data.uuid || 0), click: function(){ if($data.uuid){ $root.toggleSelect($data.uuid); } }" />
+                    <img class="ava" n:attr="data-bind => 'attr: { src: sender.avatar, alt: sender.name }'" />
+                    <div class="_content">
+                        <div class="msg-author" data-bind="css: { self: ($data.sender && $data.sender.id === window.CURRENT_USER_ID) }">
+                            <span class="name" data-bind="text: sender ? sender.name : '', css: { linkable: sender && sender.link }, click: function(d,e){ if(sender && sender.link){ if(e){ e.stopPropagation(); } window.location = sender.link; } }"></span>
+                        </div>
+                        <div class="_bubble" data-bind="css: { deleted: $data.deleted }">
+                        <div data-bind="if: !$data.deleted">
+                            <div data-bind="if: ($data.reply && (($data.reply.sender && ($data.reply.sender.name || $data.reply.sender.id)) || ($data.reply.text && $data.reply.text.trim && $data.reply.text.trim() !== '')))">
+                                <div class="reply-quote" style="border-left:2px solid #e5e7eb;padding-left:6px;margin:3px 0;color:#6b7280;font-size:12px;line-height:1.2;max-width:520px;" data-bind="with: reply">
+                                    <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><strong data-bind="text: sender ? sender.name : ''"></strong></div>
+                                    <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: text"></div>
+                                </div>
+                            </div>
+                            <div data-bind="if: (text && text.trim && text.trim() !== '')">
+                                <span class="text" data-bind="html: text"></span>
+                            </div>
+                            <div data-bind="foreach: attachments" class="attachments">
+                                <div class="msg-attach-j" data-bind="if: (type === 'photo' && photo && photo.url)">
+                                    <div class="msg-attach-j-photo">
+                                        <a n:attr="data-bind => 'attr: { href: link }, event: { click: function(d,e){ if(e&&e.stopPropagation) e.stopPropagation(); return true; } }, clickBubble: false'">
+                                            <img n:attr="data-bind => 'attr: { src: photo.url, alt: photo.caption }'" />
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="msg-attach-j" data-bind="if: (type === 'audio' && title)">
+                                    <div class="msg-attach-j-audio" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px;margin:4px 0;max-width:300px;background:#f9fafb;">
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <div style="width:32px;height:32px;border-radius:6px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;">
+                                                <div style="width:32px;height:32px;background:#4f46e5;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">♪</div>
+                                            </div>
+                                            <div style="flex:1;min-width:0;">
+                                                <div style="font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                                                <div style="color:#6b7280;font-size:12px;" data-bind="text: artist"></div>
+                                                <div style="color:#6b7280;font-size:11px;" data-bind="text: duration + ' сек'"></div>
+                                                <button class="button" style="margin-top:4px;padding:2px 8px;font-size:11px;" data-bind="click: function(){ $root.playAudio($data); }">▶ Воспроизвести</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="msg-attach-j" data-bind="if: (type === 'document' && title && url)">
+                                    <div class="msg-attach-j-document" style="border:1px solid #e5e7eb;border-radius:8px;padding:8px;margin:4px 0;max-width:300px;background:#f9fafb;">
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <div style="width:32px;height:32px;background:#059669;border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">📄</div>
+                                            <div style="flex:1;min-width:0;">
+                                                <div style="font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                                                <div style="color:#6b7280;font-size:12px;" data-bind="text: size + ' байт'"></div>
+                                                <a data-bind="attr: { href: url }, event: { click: function(d,e){ if(e&&e.stopPropagation) e.stopPropagation(); return true; } }, clickBubble: false" style="color:#3b82f6;text-decoration:none;font-size:12px;" target="_blank" rel="noopener">Скачать</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="msg-attach-j" data-bind="if: (type === 'video' && thumb && title)">
+                                    <div class="msg-attach-j-video">
+                                        <a n:attr="data-bind => 'attr: { href: url }, event: { click: function(d,e){ if(e&&e.stopPropagation) e.stopPropagation(); return true; } }, clickBubble: false'">
+                                            <img n:attr="data-bind => 'attr: { src: thumb, alt: title }'" style="max-width:300px;max-height:200px;border-radius:8px;" />
+                                        </a>
+                                        <div style="margin-top:4px;font-weight:500;font-size:14px;" data-bind="text: title"></div>
+                                    </div>
+                                </div>
+                                <div class="msg-attach-j" data-bind="if: (type === 'forward' && (text || summary))">
+                                    <div class="msg-attach-j-forward" style="border-left:2px solid #fde68a;padding-left:6px;margin:3px 0;color:#6b7280;font-size:12px;max-width:520px;">
+                                        <div><em>{_forwarded_from}</em> <strong data-bind="text: (sender && sender.name) ? sender.name : (from && from.name ? from.name : '')"></strong></div>
+                                        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: (text ? text : (summary ? summary : ''))"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div data-bind="if: $data.deleted" style="color:#6b7280;font-style:italic;">{_message_deleted}</div>
+                        </div>
+                        <div class="message-meta">
+                            <span class="date-label" data-bind="html: timing.sent"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="messenger-app--input">
+            {if $correspondent->getId() === $thisUser->getId() || $correspondent->getPrivacyPermission('messages.write', $thisUser)}
+                <div class="messenger-app--input---messagebox" style="display:flex;flex-direction:column;gap:8px; width:100%; box-sizing:border-box;">
+                    <div class="composer-overlays">
+                        <div class="reply-preview" data-bind="visible: replyTarget()">
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:12px;color:#6b7280;">{_reply}</div>
+                                <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: replyTarget() && replyTarget().sender ? replyTarget().sender.name : ''"></div>
+                                <div style="color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: replyPreview()"></div>
+                            </div>
+                            <a href="#" class="reply-preview-dismiss" data-bind="click: clearReply">×</a>
+                        </div>
+                        <div class="attach-preview" data-bind="visible: (($root.attachmentsView() || []).length > 0)">
+                            <div data-bind="foreach: $root.attachmentsView()">
+                                <div class="attach-chip">
+                                    <span data-bind="text: (type === 'audio' ? '🎵' : (type === 'document' ? '📄' : (type === 'video' ? '🎬' : '📎')))"></span>
+                                    <a data-bind="attr: { href: $root.getAttachmentUrl($data) || '#', target: (type === 'document' ? '_blank' : '_self'), download: (type === 'document' ? (filename || title || true) : null) }" style="text-decoration:none; display:flex; align-items:center; gap:4px;">
+                                        <span class="name" data-bind="text: (title || summary || filename || (type === 'photo' ? tr('_photo') : (type === 'video' ? tr('_video') : (type === 'audio' ? tr('_audio') : (type === 'document' ? tr('_document') : tr('_attachment'))))))"></span>
+                                        <span class="meta" data-bind="visible: (type === 'audio' && duration) || (type === 'document' && size), text: (type === 'audio' && duration ? (duration + ' сек') : (type === 'document' && size ? (size + ' байт') : ''))"></span>
+                                        <span class="status">✓</span>
+                                    </a>
+                                    <button type="button" class="remove" data-bind="click: function(item, e){ if(e){ e.preventDefault(); e.stopPropagation(); } $root.removeAttachment(item); }">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="composer">
+                        <img class="me-ava" src="{$thisUser->getAvatarUrl('miniscule')}" alt="me" />
+                        <div class="composer-textwrap">
+                            <textarea
+                                data-bind="value: messageContent, event: { keydown: onTextareaKeyPress }"
+                                name="message"
+                                placeholder="{_enter_message}"></textarea>
+                        </div>
+                        <div class="composer-actions">
+                            <button class="send-btn" type="button" data-bind="click: sendMessage, enable: canSend">{_send}</button>
+                            <span class="attach-wrap">
+                                <a href="#" id="attach-btn" class="attach-link" data-bind="click: toggleAttachMenu">{_attach}</a>
+                                <div id="attach-menu" data-bind="visible: attachMenuOpen">
+                                    <a href="#" data-bind="click: $root.openPhotoPicker" style="display:block; padding:4px 8px;">{_choose_from_photos}</a>
+                                    <a href="#" data-bind="click: $root.openVideoPicker" style="display:block; padding:4px 8px;">{_choose_from_videos}</a>
+                                    <!-- <a href="#" data-bind="click: $root.openAudioPicker" style="display:block; padding:4px 8px;">{_choose_from_audios}</a>
+                                    <a href="#" data-bind="click: $root.openDocumentPicker" style="display:block; padding:4px 8px;">{_choose_from_documents}</a> -->
+                                </div>
+                            </span>
+                            <button class="icon-btn" title="{_toggle_record}" aria-label="{_toggle_record}" style="display:none;">🎙</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Group controls (visible when in conversation mode) -->
+                <div data-bind="visible: isConversation()" style="margin:6px 0;">
+                    <button class="button" data-bind="click: openMembers">{_members}</button>
+                    <span style="margin-left:8px;">
+                        <button class="button" data-bind="click: generateInvite, enable: canGenerateInvite">{_generate_invite}</button>
+                        <button class="button" data-bind="click: revokeInvite, enable: canRevokeInvite" style="margin-left:4px;">{_revoke_invite}</button>
+                        <span data-bind="visible: inviteToken() && inviteLink()" style="margin-left:8px;">
+                            <input type="text" data-bind="value: inviteLink, attr: { readonly: true }" style="width:260px;" />
+                            <button class="button" data-bind="click: copyInvite">{_copy_link}</button>
+                        </span>
+                    </span>
+                </div>
+                <div class="messenger-app--input---attachments" style="position:relative;">
+                    <input type="file" id="attach-photo-input" accept="image/*" multiple style="display:none;" />
+                    <input type="file" id="attach-video-input" accept="video/*" multiple style="display:none;" />
+                    <input type="file" id="attach-audio-input" accept="audio/*" multiple style="display:none;" />
+                    <input type="file" id="attach-document-input" accept=".pdf,.doc,.docx,.txt,.rtf,.odt,.xls,.xlsx,.ppt,.pptx" multiple style="display:none;" />
+                    <div id="attach-preview" data-bind="foreach: attachments" style="margin-top:6px;">
+                        <span class="attach-chip" style="display:inline-block;padding:2px 6px;margin:2px;background:#f0f2f5;border-radius:10px;">
+                            <span data-bind="text: name"></span>
+                            <a href="#" data-bind="click: $parent.removeAttachment" style="margin-left:6px;color:#888;text-decoration:none;">×</a>
+                        </span>
+                        <div class="attach-progress" style="height:4px;background:#e1e7ed;border-radius:2px;overflow:hidden;width:120px;display:inline-block;vertical-align:middle;margin-left:6px;" data-bind="visible: status() === 'uploading'">
+                            <div style="height:100%;background:#4a7cff;width:0%" data-bind="style: { width: progress() + '%' }"></div>
+                        </div>
+                        <span class="attach-status" data-bind="visible: status() === 'done'" style="color:#2e7d32; margin-left:6px;">✓</span>
+                    </div>
+                    <div data-bind="visible: hasUploading" style="margin-top:4px;color:#6b7280;">
+                        {_uploading} <span data-bind="text: uploadingCount"></span> {_files}…
+                    </div>
+                </div>
+                <!-- Photo picker modal -->
+                <div data-bind="visible: pickerOpen() && pickerType() === 'photo'" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:20;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:860px;max-width:96vw;max-height:82vh;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:600;margin-bottom:4px;">{_choose_from_photos}</div>
+                        <div>
+                          <button class="button" data-bind="click: onAttachPhotoClick">{_upload_photo}</button>
+                        </div>
+                      </div>
+                      <a href="#" data-bind="click: $root.closePicker" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                      <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;" data-bind="foreach: filteredPickerItems()">
+                        <div class="cell" style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;text-align:center;display:flex;flex-direction:column;">
+                          <div style="position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:8px;background:#f3f4f6;">
+                            <img data-bind="attr:{ src: url, alt: title }" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                          </div>
+                          <div style="margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                          <button class="button" style="margin-top:8px;" data-bind="click: $root.pickItem, enable: !$root.isAlreadyAttached($data)">{_attach}</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="padding:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                      <div></div>
+                      <button class="button" data-bind="click: loadMore, enable: (!pickerLoading() && pickerHasMore())">{_load_more}</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Video picker modal -->
+                <div data-bind="visible: pickerOpen() && pickerType() === 'video'" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:20;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:860px;max-width:96vw;max-height:82vh;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:600;margin-bottom:4px;">{_choose_from_videos}</div>
+                        <div>
+                          <button class="button" data-bind="click: onAttachVideoClick">{_upload_video}</button>
+                        </div>
+                      </div>
+                      <a href="#" data-bind="click: $root.closePicker" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                      <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;" data-bind="foreach: filteredPickerItems()">
+                        <div class="cell" style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;text-align:center;display:flex;flex-direction:column;">
+                          <div style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:8px;background:#f3f4f6;">
+                            <img data-bind="attr:{ src: (thumb || url), alt: title }" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                          </div>
+                          <div style="margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                          <button class="button" style="margin-top:8px;" data-bind="click: $root.pickItem, enable: !$root.isAlreadyAttached($data)">{_attach}</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="padding:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                      <div></div>
+                      <button class="button" data-bind="click: loadMore, enable: (!pickerLoading() && pickerHasMore())">{_load_more}</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Audio picker modal -->
+                <div data-bind="visible: pickerOpen() && pickerType() === 'audio'" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:20;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:860px;max-width:96vw;max-height:82vh;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:600;margin-bottom:4px;">{_choose_from_audios}</div>
+                        <div>
+                          <button class="button" data-bind="click: onAttachAudioClick">{_upload_audio}</button>
+                        </div>
+                      </div>
+                      <a href="#" data-bind="click: $root.closePicker" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                      <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;" data-bind="foreach: filteredPickerItems()">
+                        <div class="cell" style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;text-align:center;display:flex;flex-direction:column;">
+                          <div style="position:relative;width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#f9fafb;border-radius:8px;">
+                            <div style="width:36px;height:36px;background:#4f46e5;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;">♪</div>
+                          </div>
+                          <div style="margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                          <button class="button" style="margin-top:8px;" data-bind="click: $root.pickItem, enable: !$root.isAlreadyAttached($data)">{_attach}</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="padding:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                      <div></div>
+                      <button class="button" data-bind="click: loadMore, enable: !pickerLoading()">{_load_more}</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Document picker modal -->
+                <div data-bind="visible: pickerOpen() && pickerType() === 'document'" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:20;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:860px;max-width:96vw;max-height:82vh;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div>
+                        <div style="font-weight:600;margin-bottom:4px;">{_choose_from_documents}</div>
+                        <div>
+                          <button class="button" data-bind="click: onAttachDocumentClick">{_upload_document}</button>
+                        </div>
+                      </div>
+                      <a href="#" data-bind="click: $root.closePicker" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                      <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;" data-bind="foreach: filteredPickerItems()">
+                        <div class="cell" style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;text-align:center;display:flex;flex-direction:column;">
+                          <div style="position:relative;width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#f9fafb;border-radius:8px;">
+                            <div style="width:36px;height:36px;background:#059669;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;">📄</div>
+                          </div>
+                          <div style="margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                          <button class="button" style="margin-top:8px;" data-bind="click: $root.pickItem, enable: !$root.isAlreadyAttached($data)">{_attach}</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="padding:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                      <div></div>
+                      <button class="button" data-bind="click: loadMore, enable: !pickerLoading()">{_load_more}</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Members modal -->
+                <div data-bind="visible: membersOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:21;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:560px;max-width:95vw;max-height:70vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div style="font-weight:600;">{_members}</div>
+                      <a href="#" data-bind="click: closeMembers" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div data-bind="visible: membersLoading" style="color:#6b7280;">{_loading}…</div>
+                      <div data-bind="foreach: members">
+                        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding:6px 0;">
+                          <div>
+                            <span data-bind="text: 'ID ' + user_id"></span>
+                            <span style="margin-left:8px;color:#6b7280;" data-bind="text: $root.roleLabel(role)"></span>
+                          </div>
+                          <div>
+                            <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.removeMember(user_id); }, enable: $root.canKick(user_id, role)">{_remove_from_group}</button>
+                            <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.toggleModerator(user_id, role); }, enable: $root.canToggleMod(user_id, role), text: role === 'moderator' ? tr('unset_moderator') : tr('set_moderator')"></button>
+                            <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.banUser(user_id); }, enable: $root.canKick(user_id, role)">{_ban}</button>
+                            <button class="button" data-bind="click: function(){ $root.transferOwner(user_id); }, enable: $root.myRole() === 'owner' && user_id !== window.CURRENT_USER_ID">{_make_owner}</button>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Friend picker to add members -->
+                      <div style="margin-top:12px;">
+                        <div style="font-weight:600;margin-bottom:6px;">{_add_member}</div>
+                        <input type="text" placeholder="{_search_friend}" data-bind="value: friendsQuery, valueUpdate: 'input'" style="width:100%;margin-bottom:6px;" />
+                        <div data-bind="foreach: filteredFriends" style="max-height:160px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;border-bottom:1px solid #f3f4f6;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                              <img n:attr="data-bind => 'attr: { src: avatar, alt: name }'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                              <span data-bind="text: name"></span>
+                            </div>
+                            <button class="button" data-bind="click: function(){ $root.addFriendToGroup(id); }">{_add}</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Forward picker modal (friends only) -->
+                <div data-bind="visible: $root.forwardOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:21;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:560px;max-width:95vw;max-height:70vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div style="font-weight:600;">{_forward_messages}</div>
+                      <a href="#" data-bind="click: $root.closeForwardPicker" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+                      <div style="display:flex;gap:8px;">
+                        <button class="button" data-bind="css: { active: $root.forwardTab() === 'friends' }, click: function(){ $root.forwardTab('friends'); }">{_friends_tab}</button>
+                        <button class="button" data-bind="css: { active: $root.forwardTab() === 'groups' }, click: function(){ $root.forwardTab('groups'); }">{_groups_tab}</button>
+                      </div>
+                      <div data-bind="visible: $root.forwardTab() === 'friends'">
+                        <input type="text" placeholder="Поиск друга" data-bind="value: friendsQuery, valueUpdate: 'input'" style="width:100%;margin-bottom:6px;" />
+                        <div data-bind="foreach: filteredFriends" style="max-height:260px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;border-bottom:1px solid #f3f4f6;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                              <img n:attr="data-bind => 'attr: { src: avatar, alt: name }'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                              <span data-bind="text: name"></span>
+                            </div>
+                            <button class="button" data-bind="click: function(){ $root.sendForwardTo(id); }">{_forward_messages}</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div data-bind="visible: $root.forwardTab() === 'groups'">
+                        <div data-bind="foreach: $root.forwardGroups" style="max-height:260px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;border-bottom:1px solid #f3f4f6;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                              <img n:attr="data-bind => 'attr: { src: avatar_url || \'/assets/packages/static/openvk/img/dialog_group.png\', alt: title }'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                              <span data-bind="text: title"></span>
+                            </div>
+                            <button class="button" data-bind="click: function(){ $root.sendForwardToGroup(id); }">{_forward_to_this_group}</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Settings modal -->
+                <div data-bind="visible: settingsOpen" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:22;">
+                  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:620px;max-width:95vw;max-height:80vh;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;">
+                    <div style="padding:12px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                      <div style="font-weight:600;">{_group_settings}</div>
+                      <a href="#" data-bind="click: closeSettings" style="text-decoration:none;color:#6b7280;font-size:18px;">×</a>
+                    </div>
+                    <div style="padding:12px;overflow:auto;">
+                      <div style="margin-bottom:12px;">
+                        <div style="font-weight:600;margin-bottom:6px;">{_group_title}</div>
+                        <input type="text" style="width:100%;" data-bind="value: settingsTitle" />
+                        <button class="button" style="margin-top:6px;" data-bind="click: saveTitle, enable: canOwner">{_save}</button>
+                      </div>
+                      <div style="margin-bottom:12px;">
+                        <div style="font-weight:600;margin-bottom:6px;">{_group_avatar}</div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                          <img id="group_settings_avatar_img" src="{isset($groupAvatarUrl) && $groupAvatarUrl ? $groupAvatarUrl : '/assets/packages/static/openvk/img/dialog_group.png'}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid #eee;" />
+                          <button class="button" data-bind="click: uploadGroupAvatar, enable: canOwner">{_upload_photo}</button>
+                        </div>
+                      </div>
+                      <div style="margin-bottom:12px;">
+                        <div style="font-weight:600;margin-bottom:6px;">{_group_members}</div>
+                        <div data-bind="foreach: members">
+                          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding:6px 0;">
+                            <div>
+                              <span data-bind="text: (name ? (name + ' (ID ' + user_id + ')') : ('ID ' + user_id))"></span>
+                              <span style="margin-left:8px;color:#6b7280;" data-bind="text: $root.roleLabel(role)"></span>
+                            </div>
+                            <div>
+                              <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.removeMember(user_id); }, enable: $root.canKick(user_id, role)">{_remove_from_group}</button>
+                              <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.toggleModerator(user_id, role); }, enable: $root.canToggleMod(user_id, role), text: role === 'moderator' ? tr('unset_moderator') : tr('set_moderator')"></button>
+                              <button class="button" style="margin-right:6px;" data-bind="click: function(){ $root.banUser(user_id); }, enable: $root.canKick(user_id, role)">{_ban}</button>
+                              <button class="button" data-bind="click: function(){ $root.transferOwner(user_id); }, enable: $root.myRole() === 'owner' && user_id !== window.CURRENT_USER_ID">{_make_owner}</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div style="font-weight:600;margin-bottom:6px;">{_invitation}</div>
+                        <button class="button" data-bind="click: generateInvite, enable: canGenerateInvite">{_generate_invite}</button>
+                        <button class="button" style="margin-left:6px;" data-bind="click: revokeInvite, enable: canRevokeInvite">{_revoke_invite}</button>
+                        <div data-bind="visible: inviteToken() && inviteLink()" style="margin-top:6px;display:flex;gap:6px;align-items:center;">
+                          <input type="text" data-bind="value: inviteLink, attr: { readonly: true }" style="flex:1;" />
+                          <button class="button" data-bind="click: copyInvite">{_copy_link}</button>
+                        </div>
+                        <div style="margin-top:12px;border-top:1px solid #eee;padding-top:10px;">
+                          <button class="button" style="background:#ef4444;border-color:#ef4444;" data-bind="click: leaveConversation">{_leave_group}</button>
+                        </div>
+                        <div style="margin-top:16px;">
+                          <div style="font-weight:600;margin-bottom:6px;">{_group_banned}</div>
+                          <div data-bind="foreach: bans" style="max-height:160px;overflow:auto;border:1px solid #eee;border-radius:6px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;border-bottom:1px solid #f3f4f6;">
+                              <div style="display:flex;align-items:center;gap:8px;">
+                                <img n:attr="data-bind => 'attr: { src: avatar, alt: name }'" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" />
+                                <span data-bind="text: name + ' (ID ' + user_id + ')' "></span>
+                              </div>
+                              <button class="button" data-bind="click: function(){ $root.unbanUser(user_id); }">{_unban}</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- <img class="ava" src="{$correspondent->getAvatarUrl('miniscule')}" alt="{$correspondent->getCanonicalName()}" /> -->
+            {else}
+                <div class="blocked" data-localized-text="{_messages_blocked}"></div>
+            {/if}
+        </div>
+    </div>
+    <style>
+        .messenger-app--messages {
+            overflow-x: hidden;
+        }
+        .messenger-app--messages .message-row {
+            cursor: pointer;
+        }
+        .messenger-app--messages .message-row.selected {
+            background-color: #f0f0f0;
+        }
+        .messenger-app--messages .message-row .message-content {
+            max-width: 100%;
+        }
+        .messenger-app--messages .message-row .message-content img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+    <script src="/assets/packages/static/openvk/js/conversation_upload.js"></script>
+    <script src="/assets/packages/static/openvk/js/node_modules/knockout/build/output/knockout-latest.js"></script>
+    <script n:syntax="off">
+        if (!window.ko) {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout-min.js"><\\/script>');
+        }
+    </script>
+    <script>
+        // Inject server-provided conversation id and globals for groups and CSRF token
+        window.GROUP_CONV_ID = {= isset($convId) && $convId ? $convId : 0 };
+        window.CSRF_HASH = {$csrfToken};
+        window.GROUP_TITLE = {= isset($groupTitle) ? json_encode($groupTitle) : '""' };
+        try { var _gtEl = document.getElementById('group_title_span'); if (_gtEl) window.GROUP_TITLE = _gtEl.textContent; } catch(e){}
+        window.GROUP_IS_OWNER = {= (isset($groupIsOwner) && $groupIsOwner) ? 'true' : 'false' };
+        try { if (typeof window.GROUP_IS_OWNER === 'string') window.GROUP_IS_OWNER = (window.GROUP_IS_OWNER === 'true'); } catch(e){}
+        window.GROUP_AVATAR_URL = {= (isset($groupAvatarUrl) && $groupAvatarUrl) ? json_encode($groupAvatarUrl) : '""' };
+        function MessengerViewModel(initialMessages = []) {
+            window.messages     = ko.observableArray(initialMessages);
+            this.messages       = window.messages;
+            this.messageContent = ko.observable("");
+            this.attachments    = ko.observableArray([]);
+            this.attachMenuOpen = ko.observable(false);
+            // Selection state
+            this.selected       = ko.observableArray([]);
+            this.isSelected     = (id) => { try { return ko.utils.arrayIndexOf(this.selected(), id) !== -1; } catch(e){ var arr = this.selected() || []; return arr.indexOf(id) !== -1; } };
+            this.toggleSelect   = (id) => {
+                var arr = this.selected() || [];
+                var idx = -1;
+                try { idx = ko.utils.arrayIndexOf(arr, id); } catch(e) { idx = arr.indexOf(id); }
+                if (idx !== -1) { arr.splice(idx, 1); } else { arr.push(id); }
+                this.selected(arr);
+            };
+            this.clearSelection = () => { try { this.selected([]); } catch(_){} };
+            this.hasSelection   = ko.pureComputed(() => {
+                try { var arr = this.selected ? this.selected() : []; return Array.isArray(arr) && arr.length > 0; } catch(_) { return false; }
+            });
+            this.selectedCount  = ko.pureComputed(() => {
+                try { var arr = this.selected ? this.selected() : []; return Array.isArray(arr) ? arr.length : 0; } catch(_) { return 0; }
+            });
+            // Floating action menu
+            this.actionMenuOpen = ko.observable(false);
+            this.actionMenuPos  = ko.observable({ x: 0, y: 0 });
+            this.actionTarget   = ko.observable(null);
+            this.openActionMenu = (msg, evt) => {
+                try {
+                    if (evt && evt.stopPropagation) evt.stopPropagation();
+                    var host = evt && evt.currentTarget ? evt.currentTarget : null;
+                    var bubble = host ? host.querySelector('._bubble') : null;
+                    var rect = bubble ? bubble.getBoundingClientRect() : (evt && evt.target ? evt.target.getBoundingClientRect() : { top: 0, left: 0, right: 0, bottom: 0 });
+                    var x = rect.right + 8;
+                    var y = rect.top;
+                    var vw = window.innerWidth || document.documentElement.clientWidth;
+                    var vh = window.innerHeight || document.documentElement.clientHeight;
+                    var menuW = 180, menuH = 140;
+                    if (x + menuW > vw - 8) x = Math.max(8, rect.left - 8 - menuW);
+                    if (y + menuH > vh - 8) y = Math.max(8, vh - 8 - menuH);
+                    this.actionMenuPos({ x: x, y: y });
+                    this.actionTarget(msg || null);
+                    this.actionMenuOpen(true);
+                } catch(e){}
+            };
+            this.closeActionMenu = () => { this.actionMenuOpen(false); this.actionTarget(null); };
+            this.onMessageClick = (msg, evt) => {
+                try {
+                    // Do not open action menu when clicking links
+                    if (evt && evt.target && evt.target.closest && evt.target.closest('a')) return true;
+                    if (evt && evt.stopPropagation) evt.stopPropagation();
+                    this.openActionMenu(msg, evt);
+                } catch(e){}
+            };
+            this.selectOne = (msg) => {
+                try {
+                    if (!msg) return; var id = (typeof msg.uuid !== 'undefined' && msg.uuid !== null) ? msg.uuid : (typeof msg.id !== 'undefined' ? msg.id : null);
+                    if (id === null) return; this.toggleSelect(id); this.closeActionMenu();
+                } catch(e){}
+            };
+            this.deleteOne = (msg) => {
+                try {
+                    if (!msg) return; var id = (typeof msg.uuid !== 'undefined' && msg.uuid !== null) ? msg.uuid : (typeof msg.id !== 'undefined' ? msg.id : null);
+                    if (id === null) return; var prev = this.selected(); this.selected([id]);
+                    if (typeof this.deleteSelected === 'function') { this.deleteSelected(); }
+                    this.selected(prev);
+                } catch(e){} this.closeActionMenu();
+            };
+            try {
+                document.addEventListener('click', (ev) => {
+                    try {
+                        var menu = document.getElementById('msg-action-menu'); if (!menu) return; if (!this.actionMenuOpen()) return;
+                        var isMenu = menu.contains(ev.target);
+                        var isMsg = !!(ev.target && ev.target.closest && ev.target.closest('.messenger-app--messages---message'));
+                        if (!isMenu && !isMsg) this.closeActionMenu();
+                    } catch(e){}
+                }, true);
+                window.addEventListener('scroll', () => { try { if (this.actionMenuOpen()) this.closeActionMenu(); } catch(e){} }, true);
+                window.addEventListener('keydown', (e) => { try { if (e.key === 'Escape') this.closeActionMenu(); } catch(_){} });
+                window.addEventListener('resize', () => { try { if (this.actionMenuOpen()) this.closeActionMenu(); } catch(e){} });
+            } catch(e){}
+            // Attach menu state and openers
+            this.attachMenuOpen = ko.observable(false);
+            this.toggleAttachMenu = (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); this.attachMenuOpen(!this.attachMenuOpen()); };
+            this.openPhotoPicker = (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); this.attachMenuOpen(false); this._openPicker('photo', tr('_choose_from_photos') || 'Выбрать из фотографий'); };
+            this.openVideoPicker = (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); this.attachMenuOpen(false); this._openPicker('video', tr('_choose_from_videos') || 'Выбрать из видео'); };
+            this.openAudioPicker = (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); this.attachMenuOpen(false); this._openPicker('audio', tr('_choose_from_audios') || 'Выбрать из аудио'); };
+            this.openDocumentPicker = (e) => { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); this.attachMenuOpen(false); this._openPicker('document', tr('_choose_from_documents') || 'Выбрать из документов'); };
+            // Attachments view for composer (normalize for preview)
+            this.attachmentsView = ko.pureComputed(() => {
+                try {
+                    var arr = this.attachments() || [];
+                    return (arr || []).map(function(a){
+                        try {
+                            var out = a || {};
+                            if (out.type === 'photo') {
+                                if (!out.photo) out.photo = {};
+                                if (!out.photo.url) out.photo.url = out.url || out.link || out.src || '';
+                            } else if (out.type === 'video') {
+                                out.thumb = out.thumb || out.thumbnail || out.preview || '';
+                                if (!out.thumb) out.thumb = out.url || '';
+                            }
+                            return out;
+                        } catch(e){ return a; }
+                    });
+                } catch(e){ return []; }
+            });
+            // Picker state
+            this.pickerOpen     = ko.observable(false);
+            this.pickerType     = ko.observable('photo');
+            this.pickerTitle    = ko.observable('');
+            // Reply state
+            this.replyTarget    = ko.observable(null);
+            this.replyPreview   = ko.pureComputed(() => {
+                try {
+                    var rt = this.replyTarget ? this.replyTarget() : null;
+                    if (!rt) return '';
+                    if (rt.text && rt.text.trim && rt.text.trim() !== '') return rt.text;
+                    var atts = rt.attachments || [];
+                    if (atts.length > 0) {
+                        var a = atts[0] || {};
+                        return a.title || a.summary || (a.type === 'photo' ? tr('_photo') : (a.type === 'video' ? tr('_video') : (a.type === 'audio' ? tr('_audio') : (a.type === 'document' ? tr('_document') : ''))));
+                    }
+                    return '';
+                } catch(e){ return ''; }
+            });
+            this.setReply       = (msg) => {
+                try {
+                    if (!msg) return;
+                    var ruuid = (typeof msg.uuid !== 'undefined' && msg.uuid !== null) ? msg.uuid : (typeof msg.id !== 'undefined' ? msg.id : null);
+                    if (ruuid === null) return;
+                    this.replyTarget({ uuid: ruuid, sender: msg.sender, text: msg.text });
+                } catch(e){}
+            };
+            this.clearReply     = (e) => { if (e && e.preventDefault) e.preventDefault(); this.replyTarget(null); };
+            // Helpers
+            this.removeAttachment = (idx) => {
+                try {
+                    var i = (typeof idx === 'function') ? idx() : idx;
+                    var arr = this.attachments();
+                    if (!Array.isArray(arr)) arr = [];
+                    if (typeof i === 'number' && i >= 0 && i < arr.length) {
+                        if (typeof this.attachments.splice === 'function') {
+                            // knockout observableArray splice
+                            this.attachments.splice(i, 1);
+                        } else {
+                            arr.splice(i, 1);
+                            this.attachments(arr);
+                            if (typeof this.attachments.valueHasMutated === 'function') this.attachments.valueHasMutated();
+                        }
+                    }
+                } catch(e){}
+            };
+            this.getAttachmentUrl = (a) => {
+                try {
+                    if (!a) return '';
+                    if (a.type === 'photo') return (a.link || (a.photo && a.photo.url) || a.url || '');
+                    if (a.type === 'video') return (a.url || a.link || '');
+                    if (a.type === 'document') return (a.url || a.link || '');
+                    if (a.type === 'audio') return (a.url || a.link || '');
+                    return a.url || a.link || '';
+                } catch(e){ return ''; }
+            };
+            this.scrollBottom   = () => { try { var c = document.querySelector('.messenger-app--messages'); if (c) c.scrollTop = c.scrollHeight; } catch(e){} };
+            this.initialLoaded  = false;
+            this.pickerItems    = ko.observableArray([]);
+            this.pickerHasMore  = ko.observable(true);
+            this.filteredPickerItems = ko.pureComputed(() => {
+                try {
+                    var type = this.pickerType();
+                    var items = this.pickerItems() || [];
+                    return items.filter(function(it){
+                        if (!it || it.type !== type) return false;
+                        if (type === 'photo') return !!(it.url);
+                        if (type === 'video') return !!(it.thumb || it.url) && !!(it.title);
+                        if (type === 'audio') return !!(it.title);
+                        if (type === 'document') return !!(it.title);
+                        return true;
+                    });
+                } catch(e){ return []; }
+            });
+            this.pickerOffset   = ko.observable(0);
+            this.pickerLimit    = ko.observable(5);
+            this.pickerLoading  = ko.observable(false);
+            // Cache per type to avoid refetch on every open
+            this.pickerCache    = {
+                photo: { items: [], offset: 0, loaded: false },
+                video: { items: [], offset: 0, loaded: false },
+                audio: { items: [], offset: 0, loaded: false },
+                document: { items: [], offset: 0, loaded: false },
+            };
+            // Dedup helper
+            this.isAlreadyAttached = (it) => {
+                try {
+                    var t = it.type, i = it.id;
+                    if (!t || !i) return false;
+                    if (window.Msg && Array.isArray(window.Msg.pendingAttachments)) {
+                        return window.Msg.pendingAttachments.some(x => x.type === t && x.id === i);
+                    }
+                } catch(e){}
+                return false;
+            };
+            this.hasUploading   = ko.pureComputed(() => {
+                try { var arr = this.attachments(); if (!Array.isArray(arr)) return false; return arr.some(a => a && a.status && a.status() === 'uploading'); } catch(e){ return false; }
+            });
+            this.uploadingCount = ko.pureComputed(() => {
+                try { var arr = this.attachments(); if (!Array.isArray(arr)) return 0; return arr.filter(a => a && a.status && a.status() === 'uploading').length; } catch(e){ return 0; }
+            });
+            this.canSend        = ko.pureComputed(() => {
+                try {
+                    const hasText = (this.messageContent() || "").trim().length > 0;
+                    const arr = this.attachments ? this.attachments() : [];
+                    const hasAtts = Array.isArray(arr) && arr.length > 0;
+                    return (hasText || hasAtts) && !this.hasUploading();
+                } catch(_) { return false; }
+            });
+            // Conversation helpers
+            this.membersOpen    = ko.observable(false);
+            this.members        = ko.observableArray([]);
+            this.membersLoading = ko.observable(false);
+            this.bans           = ko.observableArray([]);
+            this.inviteToken    = ko.observable('');
+            this.inviteLink     = ko.pureComputed(() => {
+                var tok = this.inviteToken();
+                if (!tok) return '';
+                return window.location.origin + '/messenger/api/conversations/join?token=' + tok;
+            });
+            this.isConversation = ko.pureComputed(() => !!(window.Msg && window.Msg.CONVERSATION_ID));
+            this.myRole         = ko.observable(!!window.GROUP_IS_OWNER ? 'owner' : 'member');
+            this.canGenerateInvite = ko.pureComputed(() => this.myRole() === 'owner');
+            this.canRevokeInvite   = ko.pureComputed(() => this.myRole() === 'owner');
+            this.generateInvite = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/invite/generate', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) this.inviteToken(j.token || j.invite_token || ''); });
+            };
+            this.revokeInvite = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/invite/revoke', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) this.inviteToken(''); });
+            };
+            this.copyInvite = (e) => {
+                if (e) { try { e.preventDefault(); } catch(_){} }
+                var link = this.inviteLink(); if (!link) return;
+                try { navigator.clipboard.writeText(link); } catch(_) {}
+            };
+            this.leaveConversation = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Выйти из этой группы?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/leave', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) { try { window.location.href = '/im?tab=groups'; } catch(e){} } });
+            };
+            // Settings modal state
+            this.settingsOpen   = ko.observable(false);
+            this.settingsTitle  = ko.observable(window.GROUP_TITLE || "");
+            this.settingsAvatarUrl = ko.observable(window.GROUP_AVATAR_URL || '');
+            this.canOwner       = ko.pureComputed(() => (this.myRole() === 'owner') || !!window.GROUP_IS_OWNER);
+            this.openSettings   = () => { this.settingsOpen(true); this.reloadMembers(); this.loadFriends(); this.loadBans(); };
+            this.closeSettings  = (e) => { if (e && e.preventDefault) e.preventDefault(); this.settingsOpen(false); };
+            this.saveTitle      = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var t = (this.settingsTitle()||'').trim();
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('title', t); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/rename', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j.ok) { try { var el = document.getElementById('group_title_span'); if (el) el.textContent = t; window.GROUP_TITLE = t; localStorage.setItem('groups_refresh','1'); } catch(e){} } });
+            };
+            this.uploadGroupAvatar = async () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                // Reuse hidden input from photo picker or create a temp input
+                var el = document.createElement('input');
+                el.type = 'file'; el.accept = 'image/*';
+                el.onchange = async (e) => {
+                    try {
+                        var file = e.target.files && e.target.files[0]; if (!file) return;
+                        var up = await uploadPhoto(file, 'group avatar');
+                        if (up && up.id) {
+                            var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('photo_id', String(up.id)); if (up.url) fd.set('photo_url', String(up.url)); fd.set('hash', {$csrfToken});
+                            fetch('/messenger/api/conversations/set-avatar', { method:'POST', credentials:'same-origin', body: fd })
+                              .then(r=>r.json()).then(j=>{ if (j && j.ok) { try { var url = j.avatar_url || up.url || ''; this.settingsAvatarUrl(url); var img = document.getElementById('group_avatar_img'); if (img && url) img.src = url; var simg = document.getElementById('group_settings_avatar_img'); if (simg && url) simg.src = url; localStorage.setItem('groups_refresh','1'); } catch(e){} } });
+                        }
+                    } catch(e) {}
+                };
+                el.click();
+            };
+            this.openMembers = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.membersOpen(true);
+                this.reloadMembers();
+            };
+            this.closeMembers = (e) => { if (e && e.preventDefault) e.preventDefault(); this.membersOpen(false); };
+            this.roleLabel = (r) => {
+                if (r === 'owner') return tr('owner_role');
+                if (r === 'moderator') return tr('moderator_role');
+                return tr('member_role');
+            };
+            this.canKick = (uid, role) => {
+                var mine = this.myRole();
+                if (mine === 'owner') return uid !== window.CURRENT_USER_ID && uid !== 0; // owner can kick anyone but self
+                if (mine === 'moderator') return role === 'member' && uid !== window.CURRENT_USER_ID;
+                return false;
+            };
+            this.canToggleMod = (uid, role) => {
+                return this.myRole() === 'owner' && uid !== window.CURRENT_USER_ID;
+            };
+            // (duplicate invite methods removed)
+            this.reloadMembers = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                this.membersLoading(true);
+                fetch('/messenger/api/conversations/members?conversation_id=' + window.Msg.CONVERSATION_ID, { credentials:'same-origin' })
+                  .then(r=>r.json())
+                  .then(j=>{
+                      if (j.ok && Array.isArray(j.members)) {
+                          this.members(j.members);
+                          // infer my role
+                          try{
+                              var me = (j.members || []).find(function(m){ return m.user_id === window.CURRENT_USER_ID; });
+                              if (me && me.role) this.myRole(me.role);
+                          }catch(e){}
+                          // refresh friend list excluding members
+                          this.loadFriends();
+                      }
+                  })
+                  .finally(()=> this.membersLoading(false));
+            };
+            this.loadBans = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                fetch('/messenger/api/conversations/bans?conversation_id=' + window.Msg.CONVERSATION_ID, { credentials:'same-origin' })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok && Array.isArray(j.bans)) this.bans(j.bans); });
+            };
+            this.banUser = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Забанить участника ID ' + uid + ' и удалить из группы?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/ban', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) { this.reloadMembers(); this.loadBans(); } });
+            };
+            this.unbanUser = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Разбанить пользователя ID ' + uid + '?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/unban', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) this.loadBans(); });
+            };
+            this.transferOwner = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Передать владение пользователю ID ' + uid + '?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/transfer-owner', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j && j.ok) { this.reloadMembers(); this.myRole('member'); } });
+            };
+            // Friends picker state
+            this.friendsQuery   = ko.observable('');
+            this.friends        = ko.observableArray([]);
+            this.filteredFriends = ko.pureComputed(() => {
+                var q = (this.friendsQuery()||'').toLowerCase();
+                if (!q) return this.friends();
+                try { return this.friends().filter(f => (f.name||'').toLowerCase().indexOf(q) !== -1); } catch(e) { return this.friends(); }
+            });
+            this.loadFriends = () => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                fetch('/messenger/api/friends?conversation_id=' + window.Msg.CONVERSATION_ID, { credentials:'same-origin' })
+                  .then(r=>r.json()).then(j=>{ if (j.ok && Array.isArray(j.items)) this.friends(j.items); });
+            };
+            this.addFriendToGroup = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/add-member', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j.ok) { this.reloadMembers(); this.loadFriends(); } });
+            };
+            this.removeMember = (uid) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                if (!confirm('Удалить участника ID ' + uid + ' из группы?')) return;
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/remove-member', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j.ok) this.reloadMembers(); });
+            };
+            this.toggleModerator = (uid, role) => {
+                if (!(window.Msg && window.Msg.CONVERSATION_ID)) return;
+                var next = role === 'moderator' ? 'member' : 'moderator';
+                var fd = new FormData(); fd.set('conversation_id', String(window.Msg.CONVERSATION_ID)); fd.set('user_id', String(uid)); fd.set('role', next); fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/conversations/set-role', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{ if (j.ok) this.reloadMembers(); });
+            };
+            
+            this.sendMessage = model => {
+                if(model.messageContent() === "") return false;
+                window.Msg.sendMessage(model.messageContent());
+                model.messageContent("");
+            };
+            this.loadHistory = _ => {
+                if (window.Msg && typeof window.Msg._loadHistory === 'function') {
+                    window.Msg._loadHistory();
+                }
+            };
+            
+            this.onMessagesScroll   = (model, e) => {
+                if(e.target.scrollTop < 21)
+                    model.loadHistory();
+            };
+            this.onTextareaKeyPress = (model, e) => {
+                if(e.which === 13) {
+                    if(!e.metaKey && !e.shiftKey) {
+                        let ta = u("textarea[name=message]").nodes[0];
+                        ta.blur(); //Fix update
+                        model.sendMessage(model);
+                        ta.focus();
+                        
+                        return false;
+                    }
+                }
+                
+                return true;
+            };
+            this.toggleAttachMenu = _ => {
+                this.attachMenuOpen(!this.attachMenuOpen());
+            };
+            this.openPhotoPicker = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                this._openPicker('photo', tr('choose_from_photos'));
+            };
+            this.openVideoPicker = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                this._openPicker('video', tr('choose_from_videos'));
+            };
+            this.openAudioPicker = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                this._openPicker('audio', tr('choose_from_audios'));
+            };
+            this.openDocumentPicker = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                this._openPicker('document', tr('choose_from_documents'));
+            };
+            this.onAttachPhotoClick = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                var el = document.getElementById('attach-photo-input');
+                if (el) el.click();
+            };
+            this.onAttachVideoClick = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                var el = document.getElementById('attach-video-input');
+                if (el) el.click();
+            };
+            this.onAttachAudioClick = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                var el = document.getElementById('attach-audio-input');
+                if (el) el.click();
+            };
+            this.onAttachDocumentClick = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.attachMenuOpen(false);
+                var el = document.getElementById('attach-document-input');
+                if (el) el.click();
+            };
+
+            this.removeAttachment = (item) => {
+                try {
+                    // remove from VM list
+                    this.attachments.remove(item);
+                } catch(e){}
+                // also ask Messenger to forget it
+                if (window.Msg && Array.isArray(window.Msg.pendingAttachments)) {
+                    if (item.id && item.type) {
+                        window.Msg.pendingAttachments = window.Msg.pendingAttachments.filter(x => !(x.id === item.id && x.type === item.type));
+                    } else {
+                        // fallback: match by name
+                        window.Msg.pendingAttachments = window.Msg.pendingAttachments.filter(x => x.name !== item.name);
+                    }
+                }
+            };
+
+            // Picker helpers
+            this.closePicker = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                this.pickerOpen(false);
+            };
+            this._openPicker = (type, title) => {
+                this.pickerType(type);
+                this.pickerTitle(title || (type === 'photo' ? tr('photos') : type === 'video' ? tr('videos') : type === 'audio' ? tr('audios') : tr('documents')));
+                var cache = this.pickerCache[type] || { items: [], offset: 0, loaded: false };
+                if (cache.loaded && cache.items.length > 0) {
+                    // reuse cached content
+                    this.pickerItems(cache.items.slice(0));
+                    this.pickerOffset(cache.offset);
+                    this.pickerHasMore(true);
+                    this.pickerOpen(true);
+                    return;
+                }
+                this.pickerItems([]);
+                this.pickerOffset(0);
+                this.pickerHasMore(true);
+                this.pickerOpen(true);
+                this._loadPickerItems(true);
+            };
+            this._loadPickerItems = (reset = false) => {
+                if (this.pickerLoading && this.pickerLoading()) return;
+                const type = this.pickerType();
+                const cache = this.pickerCache[type] || (this.pickerCache[type] = { items: [], offset: 0, loaded: false });
+                const offset = reset ? 0 : (cache.offset || 0);
+                const limit = this.pickerLimit();
+                let url;
+                if (type === 'photo') {
+                    url = "/im/api/my-photos.json?offset=" + offset + "&limit=" + limit;
+                } else if (type === 'video') {
+                    url = "/im/api/my-videos.json?offset=" + offset + "&limit=" + limit;
+                } else if (type === 'audio') {
+                    url = "/im/api/my-audios.json?offset=" + offset + "&limit=" + limit;
+                } else if (type === 'document') {
+                    url = "/im/api/my-documents.json?offset=" + offset + "&limit=" + limit;
+                } else {
+                    return;
+                }
+                if (reset) {
+                    cache.items  = [];
+                    cache.offset = 0;
+                    cache.loaded = false;
+                    this.pickerItems([]);
+                    this.pickerOffset(0);
+                    this.pickerHasMore(true);
+                }
+                this.pickerLoading(true);
+                fetch(url, { credentials: 'same-origin' })
+                  .then(r => r.json())
+                  .then(j => {
+                    const arr = Array.isArray(j.items) ? j.items : [];
+                    // de-duplicate by id
+                    const existingIds = new Set((cache.items || []).map(it => String(it.id)));
+                    let added = 0;
+                    for (var i = 0; i < arr.length; i++) {
+                        const it = arr[i];
+                        const key = String(it && it.id);
+                        if (!key || existingIds.has(key)) continue;
+                        existingIds.add(key);
+                        cache.items.push(it);
+                        this.pickerItems.push(it);
+                        added++;
+                    }
+                    cache.offset = offset + arr.length;
+                    cache.loaded = true;
+                    this.pickerOffset(cache.offset);
+                    if (arr.length < limit) {
+                        this.pickerHasMore(false);
+                    } else {
+                        this.pickerHasMore(true);
+                    }
+                  })
+                  .catch(_ => {})
+                  .finally(() => this.pickerLoading(false));
+            };
+            this.loadMore = _ => this._loadPickerItems(false);
+            this.pickItem = (item) => {
+                if (this.isAlreadyAttached(item)) return;
+                try {
+                    var chip = { name: item.title || (item.type + ' ' + item.id), progress: ko.observable(100), status: ko.observable('done') };
+                    chip.id = item.id; chip.type = item.type;
+                    this.attachments.push(chip);
+                } catch(e){}
+                if (window.Msg && Array.isArray(window.Msg.pendingAttachments)) {
+                    window.Msg.pendingAttachments.push({ type: item.type, id: item.id, name: item.title || (item.type + ' ' + item.id), url: (item.url || item.thumb || '') });
+                }
+                this.pickerOpen(false);
+            };
+            // Forward picker (friends-only)
+            this.forwardOpen    = ko.observable(false);
+            this.forwardTab     = ko.observable('friends'); // friends | groups
+            this.openForwardPicker = () => {
+                this.forwardTab('friends');
+                this.forwardOpen(true);
+                this.loadForwardFriends();
+                this.loadForwardGroups();
+            };
+            this.closeForwardPicker = (e) => { if (e && e.preventDefault) e.preventDefault(); this.forwardOpen(false); };
+            this.loadForwardFriends = () => {
+                fetch('/messenger/api/dialogs/recent', { credentials:'same-origin' })
+                  .then(r=>r.json()).then(j=>{ if (j && Array.isArray(j.items)) this.friends(j.items); });
+            };
+            // groups for forwarding
+            this.forwardGroups  = ko.observableArray([]);
+            this.loadForwardGroups = () => {
+                fetch('/messenger/api/conversations/list', { credentials:'same-origin' })
+                  .then(r=>r.json()).then(j=>{ if (j && Array.isArray(j.items)) this.forwardGroups(j.items); });
+            };
+            this.sendForwardTo = (uid) => {
+                try {
+                    var ids = this.selected(); if (!ids || ids.length === 0) return;
+                    // Persist selection into localStorage and navigate to dialog
+                    try { localStorage.setItem('forward_queue', JSON.stringify(ids)); } catch(_) {}
+                    this.forwardOpen(false);
+                    this.clearSelection();
+                    window.location.href = '/im?sel=' + String(uid);
+                } catch(e){}
+            };
+            this.sendForwardToGroup = (cid) => {
+                try {
+                    var ids = this.selected(); if (!ids || ids.length === 0) return;
+                    try { localStorage.setItem('forward_queue', JSON.stringify(ids)); } catch(_) {}
+                    this.forwardOpen(false);
+                    this.clearSelection();
+                    window.location.href = '/grp' + String(cid);
+                } catch(e){}
+            };
+            // Audio player
+            this.currentAudio = ko.observable(null);
+            this.isPlaying = ko.observable(false);
+            this.playAudio = (audioData) => {
+                try {
+                    if (!audioData || !audioData.id) return;
+                    // For now, just open the audio page
+                    window.open('/audio' + (audioData.owner_id || 0) + '_' + audioData.id, '_blank');
+                } catch(e) {}
+            };
+            this.deleteSelected = () => {
+                var ids = this.selected(); if (!ids || ids.length === 0) return;
+                if (!confirm(tr('confirm_delete_messages') || 'Удалить выбранные сообщения?')) return;
+                var fd = new FormData();
+                for (var i=0;i<ids.length;i++) fd.append('ids[]', String(ids[i]));
+                fd.set('hash', {$csrfToken});
+                fetch('/messenger/api/messages/delete', { method:'POST', credentials:'same-origin', body: fd })
+                  .then(r=>r.json()).then(j=>{
+                      // optimistic update in UI
+                      try {
+                          var arr = this.messages();
+                          for (var k=0;k<arr.length;k++) {
+                              if (ids.indexOf(arr[k].uuid) !== -1) {
+                                  arr[k].deleted = true; arr[k].text = ''; arr[k].attachments = [];
+                              }
+                          }
+                          this.messages.valueWillMutate(); this.messages(arr); this.messages.valueHasMutated();
+                      } catch(e){}
+                      this.clearSelection();
+                  }).catch(_=>{});
+            };
+        }
+        
+        class Messenger {
+            constructor(messages = []) {
+                this.vm     = new MessengerViewModel(messages);
+                ko.applyBindings(this.vm);
+                this.appEl  = document.querySelector(".messenger-app--messages");
+                this.offset = 0;
+                this.pendingAttachments = [];
+                this.CONVERSATION_ID = (function(){
+                    if (window.GROUP_CONV_ID && window.GROUP_CONV_ID > 0) return window.GROUP_CONV_ID;
+                    var m = location.search.match(/[?&]conv=(\d+)/);
+                    if (m) return parseInt(m[1], 10);
+                    var gp = location.pathname.match(/\/grp(\d+)/);
+                    if (gp) return parseInt(gp[1], 10);
+                    // For DMs (?sel=uid) we must return null so legacy API is used
+                    return null;
+                })();
+                window.CURRENT_USER_ID = {$thisUser->getId()};
+
+                this._loadHistory();
+                if (!this.CONVERSATION_ID) {
+                    this._setupListener();
+                }
+                this.appEl.scrollTop = this.appEl.scrollHeight;
+                this._wireAttachmentInput();
+                // Preload members/invite when in conversation
+                if (this.CONVERSATION_ID) {
+                    try { this.vm.reloadMembers(); } catch(e){}
+                }
+                // Preload forward queue if redirected from forward picker (works for 1:1 and groups)
+                try {
+                    var fq = localStorage.getItem('forward_queue');
+                    if (fq) {
+                        var ids = JSON.parse(fq);
+                        if (Array.isArray(ids) && ids.length > 0) {
+                            for (var i=0;i<ids.length;i++) {
+                                this.pendingAttachments.push({ type: 'forward', id: ids[i], name: 'forward ' + ids[i] });
+                                if (this.vm && typeof this.vm.attachments === 'function') {
+                                    var chip = { name: 'forward ' + ids[i], progress: ko.observable(100), status: ko.observable('done') };
+                                    chip.id = ids[i]; chip.type = 'forward';
+                                    this.vm.attachments.push(chip);
+                                }
+                            }
+                        }
+                        localStorage.removeItem('forward_queue');
+                    }
+                } catch(_){}
+            }
+            
+            _loadHistory() {
+                if (this.CONVERSATION_ID) {
+                    var url = '/messenger/api/conversations/messages?conversation_id=' + this.CONVERSATION_ID;
+                    if (this.offset > 0) url += ('&after=' + this.offset);
+                    fetch(url, { credentials:'same-origin' })
+                      .then(r=>r.json())
+                      .then(j=>{
+                          var items = Array.isArray(j.items) ? j.items : [];
+                          if (items.length > 0) {
+                              if (!this.initialLoaded) {
+                                  // first page: append in order and scroll bottom
+                                  for (var i=0;i<items.length;i++) { try { this.addMessage(items[i]); } catch(e){} }
+                                  var last = items[items.length - 1];
+                                  if (last && typeof last.uuid !== 'undefined') this.offset = last.uuid;
+                                  this.initialLoaded = true;
+                                  setTimeout(()=>{ try { this.appEl.scrollTop = this.appEl.scrollHeight; } catch(e){} }, 0);
+                              } else {
+                                  // older history
+                                  this.prependMessages(items);
+                                  var last = items[items.length - 1];
+                                  if (last && typeof last.uuid !== 'undefined') this.offset = last.uuid;
+                              }
+                          }
+                      })
+                      .catch(function(){})
+                      .finally(()=>{});
+                    return;
+                }
+                function fetchDM(url){
+                    let x = new XMLHttpRequest();
+                    x.open("GET", url, false);
+                    try { x.send(); } catch(_) {}
+                    return x;
+                }
+                // try legacy first
+                let xhr = fetchDM("/im/api/messages" + {$correspondent->getId()} + "/" + this.offset + ".json");
+                let messages;
+                try {
+                    if (xhr.status === 200 && xhr.responseText) {
+                        messages = JSON.parse(xhr.responseText);
+                    }
+                } catch(_) {}
+                if (!Array.isArray(messages)) {
+                    // fallback to messenger route if available
+                    xhr = fetchDM("/messenger/api/get-messages/" + {$correspondent->getId()} + "/" + this.offset);
+                    try { messages = JSON.parse(xhr.responseText); } catch(_) { messages = []; }
+                }
+                let lastMessage = messages[messages.length - 1];
+                if(typeof lastMessage !== "undefined") this.offset = lastMessage.uuid;
+                
+                this.prependMessages(messages);
+            }
+            
+            _setupListener() {
+                let listenLongpool = () => {
+                    let xhr = new XMLHttpRequest();
+                    xhr.open("GET", "/im12", true);
+                    xhr.onload = () => {
+                        let data = JSON.parse(xhr.responseText);
+                        data.forEach(event => {
+                            event = event.event;
+                            if(event.type !== "newMessage")
+                                return;
+                            else if(event.message.sender.id !== {$correspondent->getId()})
+                                return;
+                            else if(this.offset >= event.message.uuid)
+                                return void(console.warn("Gay message recieved, skipping. [-WHeterosexual]"));
+                            
+                            this.addMessage(event.message);
+                            this.offset = event.message.uuid;
+                        });
+                        
+                        listenLongpool();
+                    };
+                    xhr.send();
+                };
+                
+                listenLongpool();
+            }
+            
+            appendMessages(messages) {
+                messages.forEach(m => window.messages.push(m));
+            }
+            
+            prependMessages(messages) {
+                messages.forEach(m => window.messages.unshift(m));
+            }
+            
+            addMessage(message, scroll = true) {
+                this.appendMessages([message]);
+                
+                if(scroll) {
+                    this.appEl.scrollTop = this.appEl.scrollHeight;
+                }
+            }
+            
+            _patchMessage(tempId, message) {
+                for(let i = window.messages().length - 1; i > -1; i--) {
+                    let msg = window.messages()[i];
+                    if(typeof msg._tuid === "undefined")
+                        return;
+                    else if(msg._tuid !== tempId)
+                        return;
+                    
+                    window.messages.valueWillMutate();
+                    window.messages()[i] = message;
+                    window.messages.valueHasMutated();
+                }
+            }
+            
+            _newSelfMessage(content = "...") {
+                return {
+                    "sender": {
+                        "link": {$thisUser->getURL()},
+                        "avatar": {$thisUser->getAvatarUrl()},
+                        "name": {$thisUser->getFirstName()}
+                    },
+                    "timing": {
+                        "sent": window.API.Service.getTime(),
+                        "edited": null
+                    },
+                    "text": content,
+                    "read": false,
+                    "attachments": [],
+                    "_tuid": Math.ceil(performance.now())
+                };
+            }
+            
+            _newReplyMessage(content = "...") {
+                return {
+                    "sender": {
+                        "link": {$correspondent->getURL()},
+                        "avatar": {$correspondent->getAvatarUrl()},
+                        "name": {$correspondent->getFirstName()}
+                    },
+                    "timing": {
+                        "sent": window.API.Service.getTime(),
+                        "edited": null
+                    },
+                    "text": content,
+                    "read": true,
+                    "attachments": [],
+                    "_tuid": Math.ceil(performance.now())
+                };
+            }
+            
+            newMessage(content) {
+                let msg = this._newSelfMessage(content);
+                msg.timing.sent = "<img src=\"/assets/packages/static/openvk/img/loading_mini.gif\">";
+                this.addMessage(msg);
+                
+                return msg._tuid;
+            }
+            
+            newReply(content) {
+                let msg = this._newReplyMessage(content);
+                this.addMessage(msg);
+                
+                return msg._tuid;
+            }
+            
+            newReplies(replies) {
+                replies.forEach(this.newReply);
+            }
+            
+            sendMessage(content) {
+                const self = this;
+                if (self.CONVERSATION_ID) {
+                    var atts = self.pendingAttachments.slice();
+                    // include reply pseudo-attachment if present
+                    try { if (self.vm && typeof self.vm.replyTarget === 'function' && self.vm.replyTarget()) { atts.push({ type: 'reply', id: self.vm.replyTarget().uuid }); } } catch(e){}
+                    // immediately display own message in UI with reply quote
+                    try {
+                        var optimistic = self._newSelfMessage(escapeHtml(content));
+                        // include attachments preview into optimistic message
+                        try {
+                            var dispAtts = [];
+                            (atts || []).forEach(function(a){
+                                if (!a || !a.type) return;
+                                if (a.type === 'photo') {
+                                    var url = a.url || '';
+                                    dispAtts.push({ type: 'photo', link: url || '#', photo: { url: url || '/assets/packages/static/openvk/img/loading_mini.gif', caption: a.name || '' } });
+                                } else if (a.type === 'audio') {
+                                    dispAtts.push({ type: 'audio', title: a.name || '', artist: '', duration: 0 });
+                                } else if (a.type === 'document') {
+                                    dispAtts.push({ type: 'document', title: a.name || '', size: 0, url: a.url || '' });
+                                } else if (a.type === 'forward') {
+                                    dispAtts.push({ type: 'forward', sender: { name: '' }, text: '' });
+                                }
+                            });
+                            if (dispAtts.length) optimistic.attachments = dispAtts;
+                        } catch(e){}
+                        if (self.vm && typeof self.vm.replyTarget === 'function' && self.vm.replyTarget()) {
+                            var rt = self.vm.replyTarget();
+                            optimistic.reply = { uuid: rt.uuid, sender: { id: rt.sender && rt.sender.id, name: rt.sender && rt.sender.name }, text: rt.text };
+                        }
+                        self.addMessage(optimistic);
+                    } catch(e) {}
+                    // send via site-native endpoint so DB schema matches history
+                    try {
+                        var fd = new FormData();
+                        fd.set('conversation_id', String(self.CONVERSATION_ID));
+                        fd.set('text', content);
+                        fd.set('hash', window.CSRF_HASH);
+                        (atts || []).forEach(function(att, idx){
+                            if (!att || !att.type || typeof att.id === 'undefined') return;
+                            fd.append('attachments['+idx+'][type]', att.type);
+                            fd.append('attachments['+idx+'][id]', String(att.id));
+                        });
+                        fetch('/messenger/api/conversations/send', { method:'POST', credentials:'same-origin', body: fd })
+                          .then(function(r){ return r.json(); })
+                          .then(function(j){
+                              try {
+                                  // set proper sent time on the last optimistic message
+                                  var arr = window.messages && window.messages();
+                                  if (arr && arr.length) {
+                                      var last = arr[arr.length - 1];
+                                      if (last && last.timing) {
+                                          last.timing.sent = window.API && window.API.Service ? window.API.Service.getTime() : (new Date()).toLocaleString();
+                                          if (window.messages && typeof window.messages.valueWillMutate === 'function') {
+                                              window.messages.valueWillMutate();
+                                              window.messages.valueHasMutated();
+                                          }
+                                      }
+                                  }
+                              } catch(e){}
+                          })
+                          .catch(function(){ /* ignore to keep UI responsive */ })
+                          .finally(function(){
+                              self.pendingAttachments = [];
+                              if (self.vm && typeof self.vm.attachments === 'function') self.vm.attachments([]);
+                              if (self.vm && typeof self.vm.replyTarget === 'function') self.vm.replyTarget(null);
+                          });
+                    } catch(e) {
+                        // clear pending anyway to avoid stuck UI
+                        self.pendingAttachments = [];
+                        if (self.vm && typeof self.vm.attachments === 'function') self.vm.attachments([]);
+                    }
+                    return;
+                }
+                let tempId = self.newMessage(escapeHtml(content));
+                let msgData = new FormData();
+                msgData.set("content", content);
+                msgData.set("hash", {$csrfToken});
+                // attach pending attachments for legacy messenger
+                (self.pendingAttachments || []).forEach(function(att, idx){
+                    msgData.append("attachments[" + idx + "][type]", att.type);
+                    msgData.append("attachments[" + idx + "][id]", String(att.id));
+                });
+                // include reply pseudo-attachment if present
+                try {
+                    if (self.vm && typeof self.vm.replyTarget === 'function' && self.vm.replyTarget()) {
+                        var rt = self.vm.replyTarget();
+                        var nextIdx = (self.pendingAttachments ? self.pendingAttachments.length : 0);
+                        msgData.append("attachments[" + nextIdx + "][type]", 'reply');
+                        msgData.append("attachments[" + nextIdx + "][id]", String(rt.uuid));
+                    }
+                } catch(e){}
+                let xhr  = new XMLHttpRequest();
+                xhr.open("POST", "/im/api/messages" + {$correspondent->getId()} + "/create.json", true);
+                xhr.onreadystatechange = (function() {
+                    if(this.readyState !== 4)
+                        return;
+                    else if(this.status !== 202) {
+                        self._patchMessage(tempId, {
+                            sender: {
+                                avatar: "/assets/packages/static/openvk/img/oof.apng",
+                                id: -1,
+                                link: "/support/manpages/messages/not-delivered.html",
+                                name: tr("messages_error_1")
+                            },
+                            text: tr("messages_error_1_description"),
+                            timing: {
+                                edited: null,
+                                sent: "???"
+                            },
+                            uuid: -4096
+                        });
+                        return;
+                    }
+                    self._patchMessage(tempId, JSON.parse(xhr.responseText));
+                    // clear attachments after successful send
+                    self.pendingAttachments = [];
+                    if (self.vm && typeof self.vm.attachments === 'function') self.vm.attachments([]);
+                });
+                xhr.send(msgData);
+            }
+
+            _wireAttachmentInput() {
+                var that = this;
+                function handleFiles(ev, type){
+                    var files = Array.prototype.slice.call(ev.target.files || []);
+                    files.forEach(function(f){
+                        var item = { name: f.name, progress: ko.observable(0), status: ko.observable('uploading') };
+                        if (that.vm && typeof that.vm.attachments === 'function') that.vm.attachments.push(item);
+                        var onProg = function(p){
+                            try { item.progress(Math.round(p * 100)); } catch(e){}
+                        };
+                        if (type === 'photo') {
+                            uploadPhoto(f, '', onProg).then(function(res){
+                                // prevent duplicates
+                                if (that.vm && typeof that.vm.isAlreadyAttached === 'function' && that.vm.isAlreadyAttached({ type: res.type, id: res.id })) {
+                                    try { item.status('done'); item.progress(100); } catch(e){}
+                                    return;
+                                }
+                                that.pendingAttachments.push({ type: res.type, id: res.id, name: f.name, url: (res.url || '') });
+                                try { item.id = res.id; item.type = res.type; } catch(e){}
+                                try { item.status('done'); item.progress(100); } catch(e){}
+                                // close picker if it was open
+                                try { if (that.vm && that.vm.pickerOpen && that.vm.pickerOpen()) that.vm.pickerOpen(false); } catch(e){}
+                            }).catch(function(){ try { item.status('error'); } catch(e){} });
+                        } else if (type === 'video') {
+                            uploadVideo(f, f.name, '', onProg).then(function(res){
+                                // prevent duplicates
+                                if (that.vm && typeof that.vm.isAlreadyAttached === 'function' && that.vm.isAlreadyAttached({ type: res.type, id: res.id })) {
+                                    try { item.status('done'); item.progress(100); } catch(e){}
+                                    return;
+                                }
+                                that.pendingAttachments.push({ type: res.type, id: res.id, name: f.name, url: (res.thumb || res.url || '') });
+                                try { item.id = res.id; item.type = res.type; } catch(e){}
+                                try { item.status('done'); item.progress(100); } catch(e){}
+                                // close picker if it was open
+                                try { if (that.vm && that.vm.pickerOpen && that.vm.pickerOpen()) that.vm.pickerOpen(false); } catch(e){}
+                            }).catch(function(){ try { item.status('error'); } catch(e){} });
+                        } else if (type === 'audio') {
+                            uploadAudio(f, f.name, '', onProg).then(function(res){
+                                // prevent duplicates
+                                if (that.vm && typeof that.vm.isAlreadyAttached === 'function' && that.vm.isAlreadyAttached({ type: res.type, id: res.id })) {
+                                    try { item.status('done'); item.progress(100); } catch(e){}
+                                    return;
+                                }
+                                that.pendingAttachments.push({ type: res.type, id: res.id, name: f.name, url: (res.url || '') });
+                                try { item.id = res.id; item.type = res.type; } catch(e){}
+                                try { item.status('done'); item.progress(100); } catch(e){}
+                                // close picker if it was open
+                                try { if (that.vm && that.vm.pickerOpen && that.vm.pickerOpen()) that.vm.pickerOpen(false); } catch(e){}
+                            }).catch(function(){ try { item.status('error'); } catch(e){} });
+                        } else if (type === 'document') {
+                            uploadDocument(f, f.name, '', onProg).then(function(res){
+                                // prevent duplicates
+                                if (that.vm && typeof that.vm.isAlreadyAttached === 'function' && that.vm.isAlreadyAttached({ type: res.type, id: res.id })) {
+                                    try { item.status('done'); item.progress(100); } catch(e){}
+                                    return;
+                                }
+                                that.pendingAttachments.push({ type: res.type, id: res.id, name: f.name, url: (res.url || '') });
+                                try { item.id = res.id; item.type = res.type; } catch(e){}
+                                try { item.status('done'); item.progress(100); } catch(e){}
+                                // close picker if it was open
+                                try { if (that.vm && that.vm.pickerOpen && that.vm.pickerOpen()) that.vm.pickerOpen(false); } catch(e){}
+                            }).catch(function(){ try { item.status('error'); } catch(e){} });
+                        }
+                    });
+                }
+                var inPhoto = document.getElementById('attach-photo-input');
+                var inVideo = document.getElementById('attach-video-input');
+                var inAudio = document.getElementById('attach-audio-input');
+                var inDocument = document.getElementById('attach-document-input');
+                if (inPhoto) inPhoto.addEventListener('change', function(ev){ handleFiles(ev, 'photo'); this.value=''; });
+                if (inVideo) inVideo.addEventListener('change', function(ev){ handleFiles(ev, 'video'); this.value=''; });
+                if (inAudio) inAudio.addEventListener('change', function(ev){ handleFiles(ev, 'audio'); this.value=''; });
+                if (inDocument) inDocument.addEventListener('change', function(ev){ handleFiles(ev, 'document'); this.value=''; });
+            }
+        }
+        
+        (function(){
+            function init(){
+                if (!window.ko) { return; }
+                window.Msg = new Messenger([]);
+            }
+            function ensureKO(cb){
+                if (window.ko) return cb();
+                var triedCdn = false;
+                function load(src, next){
+                    var s = document.createElement('script');
+                    s.src = src;
+                    s.onload = function(){ next(); };
+                    s.onerror = function(){ next(); };
+                    document.head.appendChild(s);
+                }
+                load('/assets/packages/static/openvk/js/node_modules/knockout/build/output/knockout-latest.js', function(){
+                    if (window.ko) return cb();
+                    if (!triedCdn) {
+                        triedCdn = true;
+                        load('https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout-min.js', function(){ cb(); });
+                    } else {
+                        cb();
+                    }
+                });
+            }
+            ensureKO(init);
+        })();
+    </script>
+{/block}

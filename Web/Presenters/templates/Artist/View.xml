@@ -1,0 +1,55 @@
+{extends "../@layout.xml"}
+
+{block title}
+    {$artist->getName()} — {_audios}
+{/block}
+
+{block header}
+    {$artist->getName()}
+{/block}
+
+{block heading}
+    {$artist->getName()}
+{/block}
+
+{block content}
+    <div class="artistPage" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+        <section style="flex:0 0 260px;min-width:240px;">
+            <div style="width:220px;height:220px;border-radius:12px;overflow:hidden;background:#f2f2f2;">
+                <img n:if="$artistAvatarUrl" n:attr="src => $artistAvatarUrl, alt => $artist->getName()" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            </div>
+        </section>
+
+        <section style="flex:1;min-width:320px;">
+            <div style="font-size:22px;font-weight:700;">{$artist->getName()}</div>
+            <div class="audioTabs" style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;">
+                <a href="/artist{$artist->getId()}" id="used" style="text-decoration:none;">Главная</a>
+                <a href="/artist{$artist->getId()}/tracks" id="ki" style="text-decoration:none;">Все треки ({$tracksCount})</a>
+                <a href="/artist{$artist->getId()}/albums" id="ki" style="text-decoration:none;">Альбомы ({$albumsCount})</a>
+            </div>
+            <div style="margin:4px 0 2px;opacity:.85;">{$tracksCount} треков{if $albumsCount > 0} • {$albumsCount} альбомов{/if}</div>
+            <div style="margin:6px 0 2px;opacity:.85;" n:if="$artist->getBio()">{$artist->getBio()}</div>
+            <div style="margin:4px 0;opacity:.85;" n:if="$ownerUser">
+                Загрузил: <a n:attr="href => '/id' . $ownerUser->getId()">{$ownerUser->getCanonicalName()}</a>
+            </div>
+
+            <div n:if="isset($topTracks) && sizeof($topTracks) > 0" style="margin-top:12px;">
+                <h3 style="margin:10px 0;">Топ-5 треков</h3>
+                <div class="scroll_container">
+                    <div class="scroll_node" n:foreach="$topTracks as $audio">
+                        {include "../Audio/player.xml", audio => $audio}
+                    </div>
+                </div>
+            </div>
+
+            <div n:if="isset($albums) && sizeof($albums) > 0" style="margin-top:16px;">
+                <h3 style="margin:10px 0;">Альбомы</h3>
+                <div class="scroll_container playlistContainer">
+                    <div class='scroll_node' n:foreach='$albums as $playlist'>
+                        {include '../Audio/playlistListView.xml', playlist => $playlist}
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+{/block}

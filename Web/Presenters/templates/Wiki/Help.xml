@@ -1,0 +1,65 @@
+{extends "../@layout.xml"}
+
+{block title}Помощь по разметке — {$club->getName()}{/block}
+
+{block header}
+  Помощь по разметке
+{/block}
+
+{block content}
+  <div class="clear_fix">
+    <div class="left_big_block">
+      <div class="page_block">
+        <div class="page_block_header clear_fix">
+          <div class="page_block_header_inner _header">
+            <h1 class="page_block_h1">Помощь по разметке</h1>
+          </div>
+        </div>
+        <div class="page_block_content">
+          <div class="tabs">
+            <div class="tab">
+              <a href="{$club->getURL()}/wiki">Страницы</a>
+            </div>
+            <div id="activetabs" class="tab">
+              <a id="act_tab_a" href="{$club->getURL()}/wiki/help">Помощь по разметке</a>
+            </div>
+            <div class="tab" style="float:right;">
+              <a href="{$club->getURL()}">К сообществу</a>
+            </div>
+          </div>
+          <br />
+
+          <ul class="list_docs" n:syntax="off">
+            <li class="list_item"><b>Заголовки</b>: <code>== H2 ==</code>, <code>=== H3 ===</code> … <code>====== H6 ======</code></li>
+            <li class="list_item"><b>Жирный</b>: <code>'''текст'''</code> • <b>Курсив</b>: <code>''текст''</code></li>
+            <li class="list_item"><b>Зачёркнутый</b>: <code>&lt;s&gt;текст&lt;/s&gt;</code> • <b>Подчёркнутый</b>: <code>&lt;u&gt;текст&lt;/u&gt;</code></li>
+            <li class="list_item"><b>Верхний/нижний индекс</b>: <code>&lt;sup&gt;текст&lt;/sup&gt;</code> / <code>&lt;sub&gt;текст&lt;/sub&gt;</code></li>
+            <li class="list_item"><b>Моноширинный</b>: <code>&lt;tt&gt;код&lt;/tt&gt;</code> или <code>&lt;code&gt;код&lt;/code&gt;</code></li>
+            <li class="list_item"><b>Цвет/выравнивание</b>: серый <code>&lt;gray&gt;текст&lt;/gray&gt;</code>, по центру <code>&lt;center&gt;...&lt;/center&gt;</code>, вправо <code>&lt;right&gt;...&lt;/right&gt;</code></li>
+            <li class="list_item"><b>Списки</b>: маркированный <code>* пункт</code>, нумерованный <code># пункт</code> (вложенность — повтор маркера)</li>
+            <li class="list_item"><b>Цитата</b>: строка с <code>&gt; Текст</code> или <code>&lt;blockquote&gt;...&lt;/blockquote&gt;</code></li>
+            <li class="list_item"><b>Ссылки</b>: внутренняя <code>[[slug|Текст]]</code>, внешняя <code>https://example.com</code></li>
+            <li class="list_item"><b>Внутренние ссылки с якорями</b>: на заголовок <code>[[slug#h2-zagolovok|К разделу]]</code> (ид якоря генерится из текста заголовка); на начало страницы <code>[[slug|К началу]]</code></li>
+            <li class="list_item"><b>Картинка (URL)</b>: <code>[[img:https://site/pic.jpg|w=300]]</code> • с высотой <code>|h=150</code> • выравнивание <code>|align=center|right</code></li>
+            <li class="list_item"><b>Медиа (ВК‑ссылки)</b>: фото <code>[[photo-1_2]]</code> или <code>[[photo1_2]]</code>, видео <code>[[video-1_2]]</code>, аудио <code>[[audio-1_2]]</code></li>
+            <li class="list_item"><b>Спойлер</b>: <code>{{spoiler|текст}}</code></li>
+            <li class="list_item"><b>Разделитель</b>: строка из 4+ дефисов <code>----</code></li>
+            <li class="list_item"><b>Таблицы</b>:
+              <pre n:syntax="off" style="white-space:pre-wrap;margin:4px 0 0;">{|
+|-
+| A1 || B1 || C1
+|-
+| A2 || B2 || C2
+|-
+| A3 || B3 || C3
+|}</pre>
+            </li>
+            <li class="list_item"><b>Якоря</b>: создаются автоматически из заголовков; работает оглавление</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    
+  </div>
+{/block}

@@ -1,0 +1,102 @@
+{extends "../@layout.xml"}
+{block title}API для разработчиков{/block}
+{block header}{/block}
+{block body}
+<div style="padding:12px 12px calc(90px + env(safe-area-inset-bottom));background:#0b1220;min-height:100vh;color:#e5e7eb;">
+  <main style="max-width:1100px;margin:0 auto;">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:16px;margin-bottom:12px;">
+      <img style="width:92px;height:92px;object-fit:cover;border-radius:14px;border:1px dashed #374151;" src="/assets/packages/static/openvk/img/api_logo.png" alt="API Logo">
+      <div style="font-size:24px;font-weight:800;color:#e5e7eb;">API для разработчиков</div>
+      <div style="color:#9ca3af;max-width:760px;">Подключайте мобильные и веб‑клиенты. Готовые методы для авторизации, сообщений, сообществ и медиа.</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:16px;align-items:start;">
+      <!-- Left: category cards -->
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+          <a href="/dev-api/auth" style="display:flex;align-items:center;gap:10px;border:1px solid #374151;border-radius:12px;padding:18px 12px;text-decoration:none;color:#e5e7eb;background:#1f2937;transition:box-shadow 0.2s;">
+            <span style="width:38px;height:38px;border-radius:8px;background:#1e3a8a;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="8" fill="#1e3a8a"/><path d="M7 12h10M12 7l5 5-5 5" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <div style="font-weight:700;font-size:18px;">Авторизация</div>
+              <div style="color:#9ca3af;font-size:14px;">Методы для авторизации пользователей и работы с токенами доступа</div>
+            </div>
+          </a>
+          <a href="/dev-api/messages" style="display:flex;align-items:center;gap:10px;border:1px solid #374151;border-radius:12px;padding:18px 12px;text-decoration:none;color:#e5e7eb;background:#1f2937;transition:box-shadow 0.2s;">
+            <span style="width:38px;height:38px;border-radius:8px;background:#92400e;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="8" fill="#92400e"/><path d="M12 7v10M7 12h10" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <div style="font-weight:700;font-size:18px;">Сообщения</div>
+              <div style="color:#9ca3af;font-size:14px;">Методы для работы с личными сообщениями и диалогами</div>
+            </div>
+          </a>
+          <a href="/dev-api/users" style="display:flex;align-items:center;gap:10px;border:1px solid #374151;border-radius:12px;padding:18px 12px;text-decoration:none;color:#e5e7eb;background:#1f2937;transition:box-shadow 0.2s;">
+            <span style="width:38px;height:38px;border-radius:8px;background:#7c2d12;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="8" fill="#7c2d12"/><circle cx="12" cy="12" r="5" fill="#f97316"/></svg>
+            </span>
+            <div>
+              <div style="font-weight:700;font-size:18px;">Пользователи</div>
+              <div style="color:#9ca3af;font-size:14px;">Методы для получения информации о пользователях, поиска и работы с профилями</div>
+            </div>
+          </a>
+          <a href="/dev-api/groups" style="display:flex;align-items:center;gap:10px;border:1px solid #374151;border-radius:12px;padding:18px 12px;text-decoration:none;color:#e5e7eb;background:#1f2937;transition:box-shadow 0.2s;">
+            <span style="width:38px;height:38px;border-radius:8px;background:#374151;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="8" fill="#374151"/><text x="12" y="18" text-anchor="middle" font-size="14" fill="#9ca3af">👥</text></svg>
+            </span>
+            <div>
+              <div style="font-weight:700;font-size:18px;">Группы</div>
+              <div style="color:#9ca3af;font-size:14px;">Методы для работы с сообществами и группами</div>
+            </div>
+          </a>
+          <a href="/dev-api/audio" style="display:flex;align-items:center;gap:10px;border:1px solid #374151;border-radius:12px;padding:18px 12px;text-decoration:none;color:#e5e7eb;background:#1f2937;transition:box-shadow 0.2s;">
+            <span style="width:38px;height:38px;border-radius:8px;background:#1e3a8a;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="8" fill="#1e3a8a"/><path d="M8 17V7l8 5-8 5z" fill="#60a5fa"/></svg>
+            </span>
+            <div>
+              <div style="font-weight:700;font-size:18px;">Музыка</div>
+              <div style="color:#9ca3af;font-size:14px;">Методы для работы с аудиозаписями, плейлистами и поиском музыки</div>
+            </div>
+          </a>
+          <a href="/dev-api/feed" style="display:flex;align-items:center;gap:10px;border:1px solid #374151;border-radius:12px;padding:18px 12px;text-decoration:none;color:#e5e7eb;background:#1f2937;transition:box-shadow 0.2s;">
+            <span style="width:38px;height:38px;border-radius:8px;background:#7f1d1d;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="8" fill="#7f1d1d"/><path d="M6 8h12M6 12h12M6 16h8" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <div style="font-weight:700;font-size:18px;">Новости</div>
+              <div style="color:#9ca3af;font-size:14px;">Методы для работы с лентой новостей и публикациями</div>
+            </div>
+          </a>
+          <a href="/dev-api/photos" style="display:flex;align-items:center;gap:10px;border:1px solid #374151;border-radius:12px;padding:18px 12px;text-decoration:none;color:#e5e7eb;background:#1f2937;transition:box-shadow 0.2s;">
+            <span style="width:38px;height:38px;border-radius:8px;background:#14532d;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="8" fill="#14532d"/><circle cx="12" cy="12" r="4" stroke="#22c55e" stroke-width="2"/><path d="M12 8V4M8 12H4M16 12h4M12 16v4" stroke="#22c55e" stroke-width="2"/></svg>
+            </span>
+            <div>
+              <div style="font-weight:700;font-size:18px;">Фото</div>
+              <div style="color:#9ca3af;font-size:14px;">Методы для работы с фотографиями и альбомами</div>
+            </div>
+          </a>
+          <a href="/dev-api/videos" style="display:flex;align-items:center;gap:10px;border:1px solid #374151;border-radius:12px;padding:18px 12px;text-decoration:none;color:#e5e7eb;background:#1f2937;transition:box-shadow 0.2s;">
+            <span style="width:38px;height:38px;border-radius:8px;background:#92400e;display:flex;align-items:center;justify-content:center;margin-right:10px;">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="8" fill="#92400e"/><polygon points="8,5 16,12 8,19" fill="#fbbf24"/></svg>
+            </span>
+            <div>
+              <div style="font-weight:700;font-size:18px;">Видео</div>
+              <div style="color:#9ca3af;font-size:14px;">Методы для работы с видеозаписями</div>
+            </div>
+          </a>
+        </div>
+        <!-- Здесь больше не выводятся методы, только категории -->
+      </div>
+    </div>
+
+    <div style="background:#92400e;border:1px solid #d97706;border-radius:12px;padding:20px;margin-top:16px;text-align:center;">
+      <div style="font-size:20px;font-weight:700;color:#fbbf24;margin-bottom:8px;">Мы нуждаемся в разработчиках!</div>
+      <div style="color:#fed7aa;">
+        <!-- Здесь будет дополнительный текст -->
+      </div>
+    </div>
+  </main>
+</div>
+{/block}

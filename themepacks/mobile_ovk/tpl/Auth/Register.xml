@@ -1,0 +1,95 @@
+{extends "../@layout.xml"}
+
+{block title}{_registration}{/block}
+
+{block headIncludes}
+    {if !$referer}
+        <meta name="description" content="Зарегистрируйтесь в Сетке прямо сейчас!" />
+    {else}
+        <meta property="og:title" content="{$referer->getFullName()} приглашает вас в Сетку!" />
+        <meta property="og:image" content="{$referer->getAvatarUrl()}" />
+        
+        <meta name="description"
+              content="Присоединяйтесь к {$referer->getFullName()} и множеству других пользователей в Сетке!" />
+    {/if}
+{/block}
+
+{block body}
+    <div style="padding:72px 16px calc(90px + env(safe-area-inset-bottom));background:#0b1220;min-height:100vh;color:#e5e7eb;">
+        <div style="max-width:480px;margin:0 auto;">
+            <div style="text-align:center;margin-bottom:16px;">
+                <img src="/themepack/mobile_ovk/0.0.1.0/resource/logo_hero.png" alt="logo" width="128" height="128" style="display:inline-block;"/>
+            </div>
+            <div style="margin-bottom:16px;color:#94a3b8;">
+                Присоединяйтесь и находите друзей.
+            </div>
+            <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:16px;">
+                <style>
+                  .genders { display:flex; flex-direction:row; gap:10px; margin-bottom:40px; width:100%; }
+                  .gender-pill { position:relative; display:block; flex:1 1 0; min-width:0; }
+                  .gender-pill input { display:none; }
+                  .gender-pill span { display:flex; align-items:center; justify-content:center; width:100%; min-height:44px; padding:12px; border-radius:12px; background:#111827; border:1px solid #334155; color:#cbd5e1; white-space:nowrap; }
+                  .gender-pill input:checked + span { background:#2563eb; border-color:#2563eb; color:#fff; }
+                </style>
+                {if OPENVK_ROOT_CONF['openvk']['preferences']['registration']['enable'] || $referer}
+                    <p n:if="!is_null($referer)" align="center" style="color:#cbd5e1;">
+                        <strong>{$referer->getFullName()}</strong> приглашает вас в Сетку!
+                    </p>
+                    <form method="POST" enctype="multipart/form-data">
+                        <div style="margin-bottom:12px;">
+                            <label style="margin-bottom:6px;color:#cbd5e1;">{_name}</label>
+                            <input type="text" name="first_name" required="required" style="width:100%;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:12px 14px;font-size:16px;" />
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label style="margin-bottom:6px;color:#cbd5e1;">{_surname}</label>
+                            <input type="text" name="last_name" required="required" style="width:100%;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:12px 14px;font-size:16px;" />
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label style="margin-bottom:6px;color:#cbd5e1;">{_birth_date}</label>
+                            <input max={date('Y-m-d')} name="birthday" type="date" required="required" style="width:100%;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:12px 14px;font-size:16px;"/>
+                        </div>
+                        {var femalePreferred = OPENVK_ROOT_CONF["openvk"]["preferences"]["femaleGenderPriority"]}
+                        <div style="margin:10px 0 4px;color:#cbd5e1;">Кто вы?</div>
+                        <div class="genders">
+                            <label class="gender-pill">
+                                <input n:attr="checked => !$femalePreferred" type="radio" name="sex" value="male" />
+                                <span>Мужчина</span>
+                            </label>
+                            <label class="gender-pill">
+                                <input n:attr="checked => $femalePreferred" type="radio" name="sex" value="female" />
+                                <span>Женщина</span>
+                            </label>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label style="margin-bottom:6px;color:#cbd5e1;">{_email}</label>
+                            <input type="email" name="email" required="required" style="width:100%;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:12px 14px;font-size:16px;" />
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label style="margin-bottom:6px;color:#cbd5e1;">{_password}</label>
+                            <input type="password" name="password" required="required" style="width:100%;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:12px 14px;font-size:16px;" />
+                        </div>
+                        
+                        <div style="margin:8px 0 12px;color:#cbd5e1;">
+                            <input type="checkbox" required="true" name="confirmation" /> Я согласен с <a href="/privacy" style="color:#60a5fa;">политикой конфиденциальности</a> и <a href="/about" style="color:#60a5fa;">правилами сайта</a>
+                        </div>
+                        <input type="hidden" name="hash" value="{$csrfToken}" />
+                        <button type="submit" style="width:100%;background:#2563eb;border:0;color:#fff;border-radius:12px;padding:12px 14px;font-size:16px;font-weight:600;">{_registration}</button>
+                    </form>
+                {else}
+                    <center>
+                        <img src="/assets/packages/static/openvk/img/oof.apng" alt="Регистрация закрыта." style="width: 50vw;" />
+                        <p>
+                            Регистрация отключена системным администратором. При возможности попросите приглашение у вашего знакомого, если он зарегистрирован на этом сайте.
+                            {if OPENVK_ROOT_CONF['openvk']['preferences']['registration']['reason']}
+                                <br/><br/><b>{php echo OPENVK_ROOT_CONF['openvk']['preferences']['registration']['reason']}</b>
+                            {/if}
+                        </p>
+                    </center>
+                {/if}
+                <div style="text-align:center;margin-top:12px;">
+                    <a href="/login" style="color:#60a5fa;text-decoration:none;">У меня уже есть аккаунт</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{/block}

@@ -1,0 +1,416 @@
+{extends "../@layout.xml"}
+{block title}{$correspondent->getCanonicalName()}{/block}
+
+{block content}
+    <div class="wide_column_left">
+        <div class="narrow_column_wrap">
+            <div class="narrow_column">
+            &nbsp;
+            </div>
+        </div>
+        <div class="wide_column_wrap">
+            <div class="wide_column">        
+                <div class="messenger-app">
+                    <div class="messenger-app--header">
+                        <div class="messenger-app--header--back">
+                            <a href="/im">{_paginator_back}</a>
+                        </div>
+                        <div class="messenger-app--header--info">
+                            <div class="messenger-app--header--name">
+                                <a href="{$correspondent->getURL()}">{$correspondent->getCanonicalName()}</a>
+                            </div>
+                            <div class="messenger-app--header--online" n:if="($online = $correspondent->getOnline()->timestamp()) + 2505600 > time()">
+                                {var $diff = date_diff(date_create(), date_create('@' . $online))}
+                                {if 5 >= $diff->i}
+                                    {_online|lower}
+                                {else}
+                                    {$correspondent->isFemale() ? tr("was_online_f") : tr("was_online_m")} {$correspondent->getOnline()}
+                                {/if}
+                            </div>
+                        </div>
+                        <div class="messenger-app-header--actions">
+                            <div class="messenger-app-header--more-actions">
+                                <div id="profile_more_btn" class="messenger-app-header--more-actions--trigger"></div>
+                                <div id="profile_actions_tooltip" class="tippy-menu">
+                                    {if $correspondent->isBlacklistedby($thisUser)}
+                                        <a id="_bl_toggler" data-val="0" data-id="{$correspondent->getRealId()}">
+                                            {_bl_remove}
+                                        </a>
+                                    {else}
+                                        <a id="_bl_toggler" data-name="{$correspondent->getMorphedName('genitive', false)}" data-val="1" data-id="{$correspondent->getRealId()}">
+                                            {_bl_add}
+                                        </a>
+                                    {/if}
+                                    <a href="javascript:reportUser({$correspondent->getId()})">
+                                        {_report}
+                                    </a>
+                                </div>
+                            </div>
+                            <a href="{$correspondent->getURL()}" class="messenger-app--header--ava">
+                                <img class="post-avatar" src="{if str_contains($correspondent->getAvatarUrl('miniscule'), 'camera_200.png')}/themepack/vkify16/{$theme->getVersion()}/resource/camera_200.png{else}{$correspondent->getAvatarUrl('miniscule')}{/if}" alt="{$correspondent->getCanonicalName()}" />
+                                <div n:if="5 >= $diff->i" class="messenger-app--header--online"></div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="messenger-app--messages" data-bind="event: { scroll: onMessagesScroll }">
+                        <div data-bind="foreach: messages">
+                            <div class="messenger-app--messages---message" data-bind="css: { unread: !read }">
+                                <img n:class="ava, post-avatar" data-bind="attr: { src: sender.avatar, alt: sender.name }" />
+                                <div class="_content">
+                                    <a href="#" data-bind="attr: { href: sender.link }">
+                                        <strong data-bind="text: sender.name"></strong>
+                                    </a>
+                                    <span class="text" data-bind="html: text"></span>
+                                    <div data-bind="foreach: attachments" class="attachments">
+                                        <div class="msg-attach-j">
+                                            <div data-bind="if: type === 'photo'" class="msg-attach-j-photo">
+                                                <a data-bind="attr: { href: link }">
+                                                    <img data-bind="attr: { src: photo.url, alt: photo.caption  }" />
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="time" align="right">
+                                    <span data-bind="html: timing.sent"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="messenger-app--input">
+                        {if $correspondent->getId() === $thisUser->getId() || $correspondent->getPrivacyPermission('messages.write', $thisUser)}
+                            {if str_contains($thisUser->getAvatarUrl('miniscule'), 'camera_200.png')}
+                                <img class="ava" src="/themepack/vkify16/{$theme->getVersion()}/resource/camera_200.png" alt="{$thisUser->getCanonicalName()}" />
+                            {else}
+                                <img class="ava" src="{$thisUser->getAvatarUrl('miniscule')}" alt="{$thisUser->getCanonicalName()}" />
+                            {/if}
+                            <div class="messenger-app--input---messagebox">
+                                <div style="margin-bottom:6px;">
+                                    <a href="#" data-bind="click: function(e){ if(e&&e.preventDefault)e.preventDefault(); toggleAttachMenu(); }">{_attach}</a>
+                                    <span id="attach-menu" data-bind="visible: attachMenuOpen" style="display:inline-block; margin-left:10px;">
+                                        <a href="#" data-bind="click: openPhotoPicker">{_choose_from_photos}</a>
+                                        · <a href="#" data-bind="click: openVideoPicker">{_choose_from_videos}</a>
+                                        · <a href="#" data-bind="click: openAudioPicker">{_choose_from_audios}</a>
+                                        · <a href="#" data-bind="click: openDocumentPicker">{_choose_from_documents}</a>
+                                    </span>
+                                </div>
+                                <textarea
+                                        data-bind="value: messageContent, event: { keydown: onTextareaKeyPress }"
+                                        name="message"
+                                        placeholder="{_enter_message}"></textarea>
+                                <button title="{_send}" data-bind="click: sendMessage"></button>
+                            </div>
+                        {else}
+                            <div class="blocked" data-localized-text="{_messages_blocked}"></div>
+                        {/if}
+                    </div>
+                    <!-- Photo picker modal -->
+                    <div data-bind="visible: pickerOpen() && pickerType() === 'photo'" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:2000;">
+                      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:800px;max-width:96vw;max-height:82vh;border:1px solid #e5e7eb;display:flex;flex-direction:column;">
+                        <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                          <div><strong>{_choose_from_photos}</strong></div>
+                          <a href="#" data-bind="click: closePicker">×</a>
+                        </div>
+                        <div style="padding:10px;overflow:auto;">
+                          <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;" data-bind="foreach: filteredPickerItems()">
+                            <div style="border:1px solid #e5e7eb;padding:6px;">
+                              <div style="width:100%;aspect-ratio:4/3;background:#f6f7f9;overflow:hidden;">
+                                <img data-bind="attr:{ src: url, alt: title }" style="width:100%;height:100%;object-fit:cover;" />
+                              </div>
+                              <div style="margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                              <button class="button" style="margin-top:6px;" data-bind="click: $root.pickItem">{_attach}</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right;">
+                          <button class="button" data-bind="click: loadMore, enable: (!pickerLoading() && pickerHasMore())">{_load_more}</button>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Video picker modal -->
+                    <div data-bind="visible: pickerOpen() && pickerType() === 'video'" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:2000;">
+                      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:800px;max-width:96vw;max-height:82vh;border:1px solid #e5e7eb;display:flex;flex-direction:column;">
+                        <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                          <div><strong>{_choose_from_videos}</strong></div>
+                          <a href="#" data-bind="click: closePicker">×</a>
+                        </div>
+                        <div style="padding:10px;overflow:auto;">
+                          <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;" data-bind="foreach: filteredPickerItems()">
+                            <div style="border:1px solid #e5e7eb;padding:6px;">
+                              <div style="width:100%;aspect-ratio:16/9;background:#f6f7f9;overflow:hidden;">
+                                <img data-bind="attr:{ src: (thumb||url), alt: title }" style="width:100%;height:100%;object-fit:cover;" />
+                              </div>
+                              <div style="margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                              <button class="button" style="margin-top:6px;" data-bind="click: $root.pickItem">{_attach}</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right;">
+                          <button class="button" data-bind="click: loadMore, enable: (!pickerLoading() && pickerHasMore())">{_load_more}</button>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Audio picker modal -->
+                    <div data-bind="visible: pickerOpen() && pickerType() === 'audio'" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:2000;">
+                      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:800px;max-width:96vw;max-height:82vh;border:1px solid #e5e7eb;display:flex;flex-direction:column;">
+                        <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                          <div><strong>{_choose_from_audios}</strong></div>
+                          <a href="#" data-bind="click: closePicker">×</a>
+                        </div>
+                        <div style="padding:10px;overflow:auto;">
+                          <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;" data-bind="foreach: filteredPickerItems()">
+                            <div style="border:1px solid #e5e7eb;padding:6px;text-align:center;">
+                              <div style="font-size:26px;">♪</div>
+                              <div style="margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                              <button class="button" style="margin-top:6px;" data-bind="click: $root.pickItem">{_attach}</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right;">
+                          <button class="button" data-bind="click: loadMore, enable: (!pickerLoading() && pickerHasMore())">{_load_more}</button>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Document picker modal -->
+                    <div data-bind="visible: pickerOpen() && pickerType() === 'document'" style="position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:2000;">
+                      <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;width:800px;max-width:96vw;max-height:82vh;border:1px solid #e5e7eb;display:flex;flex-direction:column;">
+                        <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                          <div><strong>{_choose_from_documents}</strong></div>
+                          <a href="#" data-bind="click: closePicker">×</a>
+                        </div>
+                        <div style="padding:10px;overflow:auto;">
+                          <div data-bind="visible: pickerLoading" style="color:#6b7280;">{_loading}…</div>
+                          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;" data-bind="foreach: filteredPickerItems()">
+                            <div style="border:1px solid #e5e7eb;padding:6px;text-align:center;">
+                              <div style="font-size:22px;">📄</div>
+                              <div style="margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-bind="text: title"></div>
+                              <button class="button" style="margin-top:6px;" data-bind="click: $root.pickItem">{_attach}</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div style="padding:8px 10px;border-top:1px solid #e5e7eb;text-align:right;">
+                          <button class="button" data-bind="click: loadMore, enable: (!pickerLoading() && pickerHasMore())">{_load_more}</button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {script "js/node_modules/knockout/build/output/knockout-latest.js"}
+    <script n:syntax="off">
+        function MessengerViewModel(initialMessages) {
+            if (typeof initialMessages === 'undefined') initialMessages = [];
+            window.messages     = ko.observableArray(initialMessages);
+            this.messages       = window.messages;
+            this.messageContent = ko.observable("");
+            // Picker state
+            this.attachMenuOpen = ko.observable(false);
+            this.toggleAttachMenu = function(){ this.attachMenuOpen(!this.attachMenuOpen()); }.bind(this);
+            this.pickerOpen   = ko.observable(false);
+            this.pickerType   = ko.observable('photo');
+            this.pickerTitle  = ko.observable('');
+            this.pickerItems  = ko.observableArray([]);
+            this.pickerOffset = ko.observable(0);
+            this.pickerLimit  = ko.observable(5);
+            this.pickerLoading= ko.observable(false);
+            this.pickerHasMore= ko.observable(true);
+            this.pickerCache  = { photo:{items:[],offset:0,loaded:false}, video:{items:[],offset:0,loaded:false}, audio:{items:[],offset:0,loaded:false}, document:{items:[],offset:0,loaded:false} };
+            this.filteredPickerItems = ko.pureComputed(function(){
+                var t = this.pickerType(); var arr = this.pickerItems() || [];
+                return arr.filter(function(it){
+                    return it && it.type === t && (
+                        (t==='photo' && it.url) || (t==='video' && (it.thumb||it.url) && it.title) || (t==='audio' && it.title) || (t==='document' && it.title)
+                    );
+                });
+            }, this);
+            this.closePicker = function(e){ if(e&&e.preventDefault)e.preventDefault(); this.pickerOpen(false); }.bind(this);
+            this._openPicker = function(type, title){
+                this.pickerType(type); this.pickerTitle(title||'');
+                var cache = this.pickerCache[type];
+                if (cache.loaded && cache.items.length>0) {
+                    this.pickerItems(cache.items.slice(0));
+                    this.pickerOffset(cache.offset); this.pickerHasMore(true); this.pickerOpen(true); return;
+                }
+                this.pickerItems([]); this.pickerOffset(0); this.pickerHasMore(true); this.pickerOpen(true);
+                this._loadPickerItems(true);
+            }.bind(this);
+            this.openPhotoPicker = function(e){ if(e&&e.preventDefault)e.preventDefault(); this._openPicker('photo',''); }.bind(this);
+            this.openVideoPicker = function(e){ if(e&&e.preventDefault)e.preventDefault(); this._openPicker('video',''); }.bind(this);
+            this.openAudioPicker = function(e){ if(e&&e.preventDefault)e.preventDefault(); this._openPicker('audio',''); }.bind(this);
+            this.openDocumentPicker = function(e){ if(e&&e.preventDefault)e.preventDefault(); this._openPicker('document',''); }.bind(this);
+            this._loadPickerItems = function(reset){
+                if (typeof reset === 'undefined') reset = false;
+                if (this.pickerLoading()) return;
+                var type = this.pickerType(); var cache = this.pickerCache[type];
+                var offset = reset?0:(cache.offset||0); var limit = this.pickerLimit();
+                var url = (type==='photo') ? ('/im/api/my-photos.json?offset=' + offset + '&limit=' + limit)
+                        : (type==='video') ? ('/im/api/my-videos.json?offset=' + offset + '&limit=' + limit)
+                        : (type==='audio') ? ('/im/api/my-audios.json?offset=' + offset + '&limit=' + limit)
+                        : ('/im/api/my-documents.json?offset=' + offset + '&limit=' + limit);
+                if (reset){ cache.items=[]; cache.offset=0; cache.loaded=false; this.pickerItems([]); this.pickerOffset(0); this.pickerHasMore(true); }
+                this.pickerLoading(true);
+                var self = this;
+                fetch(url, { credentials:'same-origin' })
+                  .then(function(r){ return r.json(); })
+                  .then(function(j){
+                    var arr = Array.isArray(j.items)?j.items:[];
+                    var existing = {};
+                    for (var i=0;i<(cache.items||[]).length;i++){ existing[String(cache.items[i].id)] = 1; }
+                    for (var k=0;k<arr.length;k++){
+                        var it = arr[k]; var key = String(it && it.id);
+                        if (!key || existing[key]) continue; existing[key] = 1;
+                        cache.items.push(it); self.pickerItems.push(it);
+                    }
+                    cache.offset = offset + arr.length; cache.loaded = true; self.pickerOffset(cache.offset);
+                    if (arr.length < limit) self.pickerHasMore(false); else self.pickerHasMore(true);
+                    self.pickerLoading(false);
+                  })
+                  .catch(function(){ self.pickerLoading(false); });
+            }.bind(this);
+            this.loadMore = function(){ this._loadPickerItems(false); }.bind(this);
+            this.pickItem = function(item){ try { if (window.console && console.debug) console.debug('picked', item); } catch(_){} this.pickerOpen(false); }.bind(this);
+            
+            this.sendMessage = function(model){
+                if(model.messageContent() === "") return false;
+                window.Msg.sendMessage(model.messageContent());
+                model.messageContent("");
+            };
+            this.loadHistory = function(){
+                window.Msg._loadHistory();
+            };
+            
+            this.onMessagesScroll   = function(model, e){
+                if(e.target.scrollTop < 21) model.loadHistory();
+            };
+            this.onTextareaKeyPress = function(model, e){
+                if(e.which === 13) {
+                    if(!e.metaKey && !e.shiftKey) {
+                        var ta = u("textarea[name=message]").nodes[0];
+                        ta.blur(); //Fix update
+                        model.sendMessage(model);
+                        ta.focus();
+                        return false;
+                    }
+                }
+                return true;
+            };
+        }
+        
+        function Messenger(messages) {
+            if (typeof messages === 'undefined') messages = [];
+            this.ko     = ko.applyBindings(new MessengerViewModel(messages));
+            this.appEl  = document.querySelector(".messenger-app--messages");
+            this.offset = 0;
+            this._loadHistory();
+            this._setupListener();
+            this.appEl.scrollTop = this.appEl.scrollHeight;
+        }
+        Messenger.prototype._loadHistory = function(){
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/im/api/messages" + {$correspondent->getId()} + "/" + this.offset + ".json", false);
+            xhr.send();
+            var messages = JSON.parse(xhr.responseText);
+            var lastMessage = messages[messages.length - 1];
+            if (typeof lastMessage !== "undefined") this.offset = lastMessage.uuid;
+            this.prependMessages(messages);
+        };
+        Messenger.prototype._setupListener = function(){
+            var self = this;
+            var listenLongpool = function(){
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "/im12", true);
+                xhr.onload = function(){
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        for (var i=0;i<data.length;i++){
+                            var event = data[i].event;
+                            if (event.type !== "newMessage") continue;
+                            else if (event.message.sender.id !== {$correspondent->getId()}) continue;
+                            else if (self.offset >= event.message.uuid) continue;
+                            self.addMessage(event.message);
+                            self.offset = event.message.uuid;
+                        }
+                    } catch(_){ }
+                    listenLongpool();
+                };
+                xhr.send();
+            };
+            listenLongpool();
+        };
+        Messenger.prototype.appendMessages = function(messages){
+            for (var i=0;i<messages.length;i++) window.messages.push(messages[i]);
+        };
+        Messenger.prototype.prependMessages = function(messages){
+            for (var i=0;i<messages.length;i++) window.messages.unshift(messages[i]);
+        };
+        Messenger.prototype.addMessage = function(message, scroll){
+            if (typeof scroll === 'undefined') scroll = true;
+            this.appendMessages([message]);
+            if (scroll) this.appEl.scrollTop = this.appEl.scrollHeight;
+        };
+        Messenger.prototype._patchMessage = function(tempId, message){
+            for (var i=window.messages().length - 1; i>-1; i--) {
+                var msg = window.messages()[i];
+                if (typeof msg._tuid === 'undefined') return;
+                else if (msg._tuid !== tempId) return;
+                window.messages.valueWillMutate();
+                window.messages()[i] = message;
+                window.messages.valueHasMutated();
+            }
+        };
+        Messenger.prototype._newSelfMessage = function(content){
+            if (typeof content === 'undefined') content = "...";
+            return { sender: { link: '{$thisUser->getURL()}', avatar: '{$thisUser->getAvatarUrl()}', name: '{$thisUser->getFirstName()}' },
+                     timing: { sent: window.API.Service.getTime(), edited: null }, text: content, read: false, attachments: [], _tuid: Math.ceil(performance.now()) };
+        };
+        Messenger.prototype._newReplyMessage = function(content){
+            if (typeof content === 'undefined') content = "...";
+            return { sender: { link: '{$correspondent->getURL()}', avatar: '{$correspondent->getAvatarUrl()}', name: '{$correspondent->getFirstName()}' },
+                     timing: { sent: window.API.Service.getTime(), edited: null }, text: content, read: true, _tuid: Math.ceil(performance.now()) };
+        };
+        Messenger.prototype.newMessage = function(content){
+            var msg = this._newSelfMessage(content);
+            msg.timing.sent = "<img src=\"/assets/packages/static/openvk/img/loading_mini.gif\">";
+            this.addMessage(msg);
+            return msg._tuid;
+        };
+        Messenger.prototype.newReply = function(content){
+            var msg = this._newReplyMessage(content);
+            this.addMessage(msg);
+            return msg._tuid;
+        };
+        Messenger.prototype.newReplies = function(replies){
+            for (var i=0;i<replies.length;i++) this.newReply(replies[i]);
+        };
+        Messenger.prototype.sendMessage = function(content){
+            if (window.console && console.debug) console.debug("New outcoming message. Pushing preview to local stack.");
+            var tempId = this.newMessage(escapeHtml(content));
+            var msgData = new FormData();
+            msgData.set("content", content);
+            msgData.set("hash", '{$csrfToken}');
+            var that = this;
+            var xhr  = new XMLHttpRequest();
+            xhr.open("POST", "/im/api/messages" + {$correspondent->getId()} + "/create.json", true);
+            xhr.onreadystatechange = (function(){
+                if (this.readyState !== 4) return;
+                else if (this.status !== 202) {
+                    if (window.console && console.error) console.error("Message was not sent.");
+                    that._patchMessage(tempId, { sender: { avatar: "/assets/packages/static/openvk/img/oof.apng", id: -1, link: "/support/manpages/messages/not-delivered.html", name: "{_messages_error_1}" },
+                                                 text: "{_messages_error_1_description}", timing: { edited: null, sent: "???" }, uuid: -4096 });
+                    return;
+                }
+                if (window.console && console.debug) console.debug("Message sent, updating view.");
+                that._patchMessage(tempId, JSON.parse(xhr.responseText));
+            });
+            xhr.send(msgData);
+            if (window.console && console.debug) console.debug("Message sent, awaiting response.");
+        };
+        
+        window.Msg = new Messenger([]);
+    </script>
+{/block}

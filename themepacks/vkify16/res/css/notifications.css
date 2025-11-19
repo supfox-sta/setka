@@ -1,0 +1,181 @@
+@keyframes notification_ballon_appears {
+	0% {
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+@keyframes notification_ballon_disappears {
+	0% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+.notifications_global_wrap {
+    bottom: 0;
+    left: 0;
+    padding: 0 0 2px;
+    z-index: 1001;
+    position: fixed;
+}
+.notification_ballon {
+	background-color: rgba(0, 0, 0, 0.7);
+	height: unset;
+	color: white !important;
+	display: block;
+	animation-name: notification_ballon_appears;
+	animation-duration: 0.5s;
+	cursor: pointer;
+	width: 320px;
+	background: rgba(54, 56, 59, .96);
+	border-radius: 4px;
+	box-shadow: 0 2px 3px rgba(0, 0, 0, .2);
+	font-size: 12.5px;
+	cursor: pointer;
+}
+.notification_ballon.disappears {
+	animation-name: notification_ballon_disappears;
+	animation-duration: 0.5s;
+}
+.notification_ballon_wrap {
+	margin: 0 0 8px 10px;
+	min-height: 90px;
+}
+.notification_ballon notification_title {
+	margin: 0;
+	padding: 10px 12px 0;
+	font-size: 12.5px;
+	font-weight: 700;
+	display: block;
+}
+.notification_ballon notification_title .close {
+	width: 10px;
+	height: 16px;
+	padding: 12px;
+	float: right;
+	overflow: auto;
+	margin: -10px -12px -11px 12px;
+	opacity: 0.65;
+	color: #fff;
+	transition-duration: 0.3s;
+	font-size: 0;
+}
+.notification_ballon notification_title .close::before {
+	display: block;
+	content: '';
+	background: url('data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%2210%22%20height%3D%2210%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%203.727L8.464.264a.9.9%200%201%201%201.272%201.272L6.273%205l3.463%203.464a.9.9%200%201%201-1.272%201.272L5%206.273%201.536%209.736A.9.9%200%201%201%20.264%208.464L3.727%205%20.264%201.536A.9.9%200%201%201%201.536.264L5%203.727z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22nonzero%22%2F%3E%3C%2Fsvg%3E') no-repeat;
+	height: 10px;
+	width: 10px;
+}
+.notification_ballon notification_title .close:hover {
+	opacity: 1;
+	filter: none;
+}
+.notification_ballon wrap {
+	display: flex;
+	flex-direction: row;
+	padding: 11px 12px 12px;
+}
+.notification_ballon wrap content {
+	font-size: 12.5px;
+	line-height: 16px;
+}
+.notification_ballon wrap avatar img {
+	width: 50px;
+	height: 50px;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.feedback_row {
+	padding: 12px 20px;
+	border-top:1px solid var(--border-color);
+	margin-top: -1px;
+}
+.feedback_image {
+	display: block;
+	float: left;
+	position: relative;
+}
+.feedback_image img {
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	-moz-force-broken-image-icon: 0;
+	background-color: var(--module-background-color--secondary);
+	position: relative;
+	vertical-align: top;
+}
+.feedback_content {
+	margin: 0 0 0 62px;
+	word-wrap: break-word;
+	min-height: 50px;
+	font-size: 12.5px;
+}
+.feedback_header {
+	padding: 2px 0 0 0;
+	color: var(--text-color);
+	line-height: 17px;
+}
+.feedback_footer {
+	font-size: 12.5px;
+	padding: 2px 0;
+	color: var(--muted-text-color);
+	overflow: hidden;
+	line-height: 1.417;
+}
+
+.tippy-content .ui_tab, .tippy-content .ui_tab_plain,.tippy-content .ui_tab:hover, .tippy-content .ui_tabs .ui_tab:hover {
+	padding: 11px 5px 10px!important;
+}
+.tippy-content .feedback_row {
+	padding: 10px 14px;
+}
+.tippy-content .feedback_image img {
+	height: 40px;
+	width: 40px;
+}
+.tippy-content .feedback_content {
+	margin: 0 0 0 52px;
+	min-height: 40px;
+}
+.tippy-content .pr {
+	width: 100%;
+	margin: auto;
+}
+.tippy-box[data-theme~="notifications"] {
+	width: 470px;
+}
+.tippy-box[data-theme~="notifications"] .scroll_container {
+	max-height: 400px;
+	overflow-y:auto;
+}
+.top_notify_show_all {
+	display: block;
+	padding: 10px 0 12px;
+	background-color: inherit;
+	border-top: 1px solid var(--border-color);
+	text-align: center;
+	border-radius: 0 0 var(--module-border-radius) var(--module-border-radius);
+}
+.top_notify_show_all:hover {
+	background-color: var(--button-background-color--light);
+}
+.notifications_loading {
+	width: 100%;
+	height: 300px;
+	text-align: center;
+	position: relative;
+}
+.notifications_loading .pr {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%);
+}

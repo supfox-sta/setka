@@ -1,0 +1,33 @@
+{extends "../@layout.xml"}
+
+{block title}Сетка{/block}
+
+{block body}
+    <div style="padding:72px 16px calc(100px + env(safe-area-inset-bottom));background:#0b1220;min-height:100vh;color:#e5e7eb;">
+        <div style="max-width:820px;margin:0 auto;">
+            <!-- Hero -->
+            <div style="text-align:center;margin-bottom:18px;">
+                <img src="/themepack/mobile_ovk/0.0.1.0/resource/logo_hero.png" alt="logo" width="128" height="128" style="display:inline-block;"/>
+            </div>
+            <div style="text-align:center;margin-bottom:14px;">
+                <div style="font-size:22px;font-weight:800;">СЕТКА</div>
+                <div style="margin-top:6px;color:#94a3b8;">Open‑source социальная сеть, основанная на структуре VK.</div>
+            </div>
+            <!-- CTAs -->
+            <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;">
+                <a href="/login" style="flex:1;max-width:240px;text-align:center;background:#2563eb;color:#fff;border-radius:12px;padding:12px 14px;text-decoration:none;font-weight:600;">Войти</a>
+                <a href="/reg" style="flex:1;max-width:240px;text-align:center;background:#1f2937;color:#e5e7eb;border:1px solid #334155;border-radius:12px;padding:12px 14px;text-decoration:none;">Зарегистрироваться</a>
+            </div>
+            <!-- Stats -->
+           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;">Пользователей: <b>{$stats->all}</b></div>
+                <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;">Онлайн: <b>{$stats->online}</b></div>
+                <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;">Активных: <b>{$stats->active}</b></div>
+            </div>
+            <!-- Intro -->
+            <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px;color:#cbd5e1;">
+                Оставайтесь на связи с друзьями — мобильная версия всегда под рукой.
+            </div>
+        </div>
+    </div>
+{/block}

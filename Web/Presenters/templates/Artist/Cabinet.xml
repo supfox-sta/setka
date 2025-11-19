@@ -1,0 +1,121 @@
+{extends "../@layout.xml"}
+
+{block title}
+    Кабинет исполнителя
+{/block}
+
+{block header}
+    <a href="/audios/home">Аудиозаписи</a>
+    »
+    Кабинет исполнителя
+{/block}
+
+{block content}
+    <div class="container_gray" style="border:0;margin-top:-10px;">
+        <div class="content_block" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+            <section class="content_item" style="flex:0 0 260px;min-width:240px;order:1;">
+                <h3>Аватар</h3>
+                <div style="display:block;margin-bottom:10px;">
+                    <label for="cab_avatar" style="display:block;cursor:pointer;">
+                        <img n:attr="src => $artistAvatarUrl ?? '/themepack/mobile_ovk/0.0.1.0/resource/icons/user.svg'" style="width:220px;height:220px;border-radius:12px;object-fit:cover;background:#f2f2f2;display:block;" />
+                    </label>
+                </div>
+                <form method="post" action="/artists/cabinet" enctype="multipart/form-data" class="aui">
+                    <input type="hidden" name="hash" value="{$csrfToken}" />
+                    <input type="hidden" name="act" value="update_avatar" />
+                    <div class="field-group">
+                        <label for="cab_avatar">Аватар</label>
+                        <input id="cab_avatar" name="avatar" type="file" accept="image/*" onchange="this.form.submit()" />
+                    </div>
+                    <div class="buttons"><input class="button submit" type="submit" value="Обновить аватар" /></div>
+                </form>
+            </section>
+
+            <!-- Profile edit (name/bio) -->
+            <section class="content_item" style="flex:1;min-width:320px;order:2;">
+                <h3>Профиль</h3>
+                <form method="post" action="/artists/cabinet" class="aui">
+                    <input type="hidden" name="hash" value="{$csrfToken}" />
+                    <div class="field-group">
+                        <label for="cab_name">Имя</label>
+                        <input class="text long-field" id="cab_name" name="name" type="text" n:attr="value => $artist->getName()" maxlength="120" />
+                    </div>
+                    <div class="field-group">
+                        <label for="cab_bio">Био</label>
+                        <textarea class="textarea long-field" id="cab_bio" name="bio" rows="4">{$artist->getBio()}</textarea>
+                    </div>
+                    <div class="buttons">
+                        <input class="button submit" type="submit" value="Сохранить" />
+                    </div>
+                </form>
+            </section>
+
+            <section class="content_item" style="flex:1;min-width:320px;order:3;">
+                <h3>Треки артиста</h3>
+                <div n:if="sizeof($tracks) == 0" style="opacity:.7;">Пока нет треков.</div>
+                <div class="scroll_container" n:if="sizeof($tracks) > 0">
+                    <div class="scroll_node" n:foreach="$tracks as $audio">
+                        {include "../Audio/player.xml", audio => $audio}
+                    </div>
+                </div>
+            </section>
+
+            <section class="content_item" style="flex:1;min-width:320px;order:5;">
+                <h3>Альбомы артиста</h3>
+                <div n:if="sizeof($albums) == 0" style="opacity:.7;">Пока нет альбомов.</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;" n:if="sizeof($albums) > 0">
+                    <a n:foreach="$albums as $pl" n:attr="href => '/playlist' . $pl->getOwner()->getRealId() . '_' . $pl->getId()" style="text-decoration:none;color:inherit;">
+                        <div style="border-radius:12px;overflow:hidden;background:#111827;border:1px solid rgba(255,255,255,0.08);aspect-ratio:1/1;">
+                            <img n:attr="src => $pl->getCoverURL(), alt => $pl->getName()" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                        </div>
+                        <div style="margin-top:6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$pl->getName()}</div>
+                        <div style="opacity:.8;font-size:12px;">{$pl->size()} треков</div>
+                        <div><a n:attr="href => '/admin/music/editPlaylist?id=' . $pl->getId()" class="link" style="font-size:12px;">Редактировать</a></div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Attach liked tracks -->
+            <section id="add-tracks" class="content_item" style="flex:1;min-width:320px;order:4;">
+                <h3>Добавить треки из понравившихся</h3>
+                <form method="post" action="/artists/cabinet" class="aui">
+                    <input type="hidden" name="hash" value="{$csrfToken}" />
+                    <input type="hidden" name="act" value="attach_liked_tracks" />
+                    <div n:if="sizeof($liked_tracks) == 0" style="opacity:.7;">Пока нет понравившихся треков.</div>
+                    <div n:if="sizeof($liked_tracks) > 0" style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto;padding:0;">
+                        <label n:foreach="$liked_tracks as $a" style="display:flex;align-items:center;gap:10px;padding:6px 0;border-radius:6px;background:transparent;">
+                            <input type="checkbox" name="audio_ids[]" n:attr="value => $a->getId()" />
+                            <img n:attr="src => $a->getCoverURL() ? $a->getCoverURL() : '/themepack/mobile_ovk/0.0.1.0/resource/icons/note.svg'" alt="cover" style="width:36px;height:36px;border-radius:6px;object-fit:cover;background:#111827;" />
+                            <span style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%;">{$a->getPerformer()} — {$a->getTitle()}</span>
+                        </label>
+                    </div>
+                    <div class="buttons" style="margin-top:8px;">
+                        <input class="button submit" type="submit" value="Добавить выбранные" />
+                    </div>
+                </form>
+            </section>
+
+            <!-- Attach liked playlist (Variant A) -->
+            <section id="add-album" class="content_item" style="flex:1;min-width:320px;order:5;">
+                <h3>Добавить альбом из понравившихся</h3>
+                <form method="post" action="/artists/cabinet" class="aui">
+                    <input type="hidden" name="hash" value="{$csrfToken}" />
+                    <input type="hidden" name="act" value="attach_liked_playlist" />
+                    <div n:if="sizeof($liked_playlists) == 0" style="opacity:.7;">Пока нет понравившихся альбомов.</div>
+                    <div n:if="sizeof($liked_playlists) > 0" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
+                        <label n:foreach="$liked_playlists as $pl" style="display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:8px;cursor:pointer;">
+                            <input type="radio" name="playlist_id" n:attr="value => $pl->getId()" style="margin-bottom:6px;" />
+                            <div style="border-radius:10px;overflow:hidden;aspect-ratio:1/1;background:#111827;">
+                                <img n:attr="src => $pl->getCoverURL(), alt => $pl->getName()" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                            </div>
+                            <div style="margin-top:6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{$pl->getName()}</div>
+                        </label>
+                    </div>
+                    <div class="buttons" style="margin-top:8px;">
+                        <input class="button submit" type="submit" value="Добавить альбом" />
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+{/block}

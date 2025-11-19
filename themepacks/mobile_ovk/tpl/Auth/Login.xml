@@ -1,0 +1,29 @@
+{extends "../@layout.xml"}
+
+{block title}{_log_in}{/block}
+
+{block body}
+    <div style="padding:72px 16px calc(90px + env(safe-area-inset-bottom));background:#0b1220;min-height:100vh;color:#e5e7eb;">
+        <div style="max-width:420px;margin:0 auto;">
+            <div style="margin-bottom:16px;color:#94a3b8;text-align:center;">
+                Оставайтесь на связи с друзьями — мобильная версия всегда под рукой.
+            </div>
+            <form method="POST" enctype="multipart/form-data" style="background:#0f172a;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:16px; text-align:left;">
+                <div style="margin-bottom:12px;">
+                    <label style="margin-bottom:6px;color:#cbd5e1; text-align:left;">{_email}</label>
+                    <input type="text" name="login" required="required" style="width:100%;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:12px 14px;font-size:16px;" />
+                </div>
+                <div style="margin-bottom:6px;">
+                    <label style="margin-bottom:6px;color:#cbd5e1; text-align:left;">{_password}</label>
+                    <input type="password" name="password" required="required" style="width:100%;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:12px 14px;font-size:16px;" />
+                </div>
+                <div style="text-align:right;margin:8px 0 14px;">
+                    <a href="/restore" style="color:#60a5fa;text-decoration:none;">Забыли пароль?</a>
+                </div>
+                <input type="hidden" name="hash" value="{$csrfToken}" />
+                <button type="submit" style="width:100%;background:#2563eb;border:0;color:#fff;border-radius:12px;padding:12px 14px;font-size:16px;font-weight:600;">{_log_in}</button>
+                <a href="/reg" style="display:block;text-align:center;margin-top:10px;background:#1f2937;border:1px solid #334155;color:#e5e7eb;border-radius:12px;padding:12px 14px;font-size:16px;text-decoration:none;">{_registration}</a>
+            </form>
+        </div>
+    </div>
+{/block}

@@ -1,0 +1,146 @@
+{extends "../@layout.xml"}
+
+{block title}Материалы — {$club->getName()}{/block}
+
+{block header}
+  Материалы сообщества
+{/block}
+
+{block content}
+  <div class="clear_fix">
+    <div class="left_big_block">
+      <div class="page_block">
+        <div class="page_block_header clear_fix">
+          <div class="page_block_header_inner _header"></div>
+        </div>
+        <div class="page_block_content">
+          <style n:syntax="off">
+            .wiki_info{background:#f5f7fa;border:1px solid #e6edf5;padding:10px 12px;margin:0 0 12px;color:#2c3e50}
+            .wiki_card{width:100%;border:1px solid #e6edf5;background:#fff;margin-bottom:12px}
+            .wiki_card_title{font-size:14px}
+            .wiki_card_actions{font-size:11px}
+          </style>
+          <div class="tabs">
+            <div id="activetabs" class="tab">
+              <a id="act_tab_a" href="{$club->getURL()}/wiki">Страницы</a>
+            </div>
+            <div class="tab">
+              <a href="{$club->getURL()}/wiki/help">Помощь по разметке</a>
+            </div>
+            <div class="tab" style="float:right;">
+              <a href="{$club->getURL()}">К сообществу</a>
+            </div>
+          </div>
+          <br />
+          <div class="wiki_info">Ваша группа может содержать дополнительные страницы с информацией.</div>
+          <div class="sub_caption" style="margin:0 0 10px;">
+            {var $cnt = count($pages)}
+            {if $cnt === 1}
+              <a href="{$club->getURL()}/wiki/{$pages[0]->getSlug()}">Единственная страница</a>
+            {elseif $cnt > 1}
+              Всего страниц: {$cnt}
+            {/if}
+            {if !is_null($user) && $club->getOwner()->getId() === $user->getId()}
+              &nbsp;|&nbsp;<a class="wiki-create-link" href="{$club->getURL()}/wiki/new/edit" data-create-base="{$club->getURL()}/wiki/">Создать новую страницу</a>
+            {/if}
+          </div>
+          {if $canModify}
+            <div style="margin:8px 0 12px;">
+              <a class="wiki-create-link" href="{$club->getURL()}/wiki/new/edit" data-create-base="{$club->getURL()}/wiki/">Создать страницу</a>
+            </div>
+          {/if}
+          {if empty($pages)}
+            <div class="msg msg_info">Пока нет материалов.</div>
+          {else}
+            {foreach $pages as $p}
+              {var $isPinned = isset($pinnedMap) && isset($pinnedMap[$p->getId()])}
+              <table border="0" class="post wiki_card">
+                <tbody>
+                  <tr>
+                    <td width="54" valign="top">
+                      <img src="/assets/packages/static/openvk/img/note_icon.png" alt="page" width="32" height="32" style="display:block;margin:14px auto 0;" />
+                    </td>
+                    <td valign="top" style="padding:10px 12px;">
+                      <div class="post-author" style="font-size:12px;color:#55677d;margin-bottom:6px;">
+                        Создана {date('d.m.Y H:i', $p->getCreatedAt())}
+                        {if $p->getUpdatedAt() && $p->getUpdatedAt() != $p->getCreatedAt()} • Обновлена {date('d.m.Y H:i', $p->getUpdatedAt())}{/if}
+                      </div>
+                      <div class="post-content wiki_card_title" style="padding:2px 0 6px;">
+                        <a class="link" href="{$club->getURL()}/wiki/{$p->getSlug()}"><b>== {$p->getTitle()} ==</b></a>
+                        {if $isPinned}
+                          <span class="sub_caption" style="color:#2a5885;margin-left:6px;">(главная)</span>
+                        {/if}
+                      </div>
+                      <div class="sub_caption wiki_card_actions" style="margin-top:2px;">
+                        <a href="{$club->getURL()}/wiki/{$p->getSlug()}/history">история</a>
+                        {if $canModify}
+                          &nbsp;|&nbsp;<a href="{$club->getURL()}/wiki/{$p->getSlug()}/edit">редактировать</a>
+                          {if !$isPinned}
+                            &nbsp;|&nbsp;<a href="{$club->getURL()}/wiki/pin/{$p->getId()}" data-method="post" data-params="hash={$csrfToken}">сделать главной</a>
+                          {else}
+                            &nbsp;|&nbsp;<a href="{$club->getURL()}/wiki/unpin/{$p->getId()}" data-method="post" data-params="hash={$csrfToken}">снять с главной</a>
+                          {/if}
+                          &nbsp;|&nbsp;<a href="{$club->getURL()}/wiki/{$p->getSlug()}/delete" rel="nofollow">удалить</a>
+                        {/if}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            {/foreach}
+          {/if}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  (function(){
+    var links = document.querySelectorAll('.wiki-create-link');
+    if(!links.length) return;
+
+    links.forEach(function(link){
+      link.addEventListener('click', function(ev){
+        ev.preventDefault();
+        var base = link.getAttribute('data-create-base') || '';
+        if(base.length && base.slice(-1) !== '/') {
+          base += '/';
+        }
+        var html = '<div class="wiki-create-dialog"><label style="display:block;margin-bottom:6px;">Адрес страницы</label>' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+          '<span style="font-size:12px;color:#55677d;">' + base + '</span>' +
+          '<input type="text" id="wiki_create_slug_input" style="flex:1;" maxlength="128" placeholder="novaya-stranica" />' +
+          '</div>' +
+          '<div class="sub_caption" style="margin-top:6px;">Допустимы латиница, цифры, символы . _ -</div>' +
+          '</div>';
+
+        MessageBox('Новая страница', html, ['Создать', 'Отмена'], [
+          function(){
+            var input = document.getElementById('wiki_create_slug_input');
+            if(!input) return;
+            var slug = input.value.trim();
+            if(!slug){
+              input.focus();
+              return;
+            }
+            slug = slug.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+            if(slug === '') {
+              slug = 'page';
+            }
+            window.location.href = base + encodeURIComponent(slug) + '/edit';
+          },
+          Function.noop
+        ]);
+
+        setTimeout(function(){
+          var input = document.getElementById('wiki_create_slug_input');
+          if(input){
+            input.focus();
+            input.select();
+          }
+        }, 0);
+      });
+    });
+  })();
+</script>
+{/block}

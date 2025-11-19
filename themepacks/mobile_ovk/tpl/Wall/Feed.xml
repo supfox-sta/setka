@@ -1,0 +1,27 @@
+{extends "../@layout.xml"}
+{block title}{_feed}{/block}
+
+{block body}
+    {if $paginatorConf->page < 2}
+        <div class="contentWraplegend">
+            <span>{_feed}</span>
+        </div>
+        <div class="feed-tabs" style="display:flex;gap:6px;background:#0f172a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:4px;margin:8px 0 12px;">
+            <a href="/feed" style="flex:1;text-align:center;text-decoration:none;padding:8px 10px;border-radius:8px;{if !isset($globalFeed)}background:#2563eb;color:#fff;{else}color:#cbd5e1;{/if}">{_feed}</a>
+            <a href="/feed/all" style="flex:1;text-align:center;text-decoration:none;padding:8px 10px;border-radius:8px;{if isset($globalFeed)}background:#2563eb;color:#fff;{else}color:#cbd5e1;{/if}">{_all_news}</a>
+        </div>
+    {/if}
+
+    <div class="content_subtitle">
+        {include "../components/textArea.xml", route => "/wall" . $thisUser->getId() . "/makePost"}
+    </div>
+
+    <div class="content_post">
+        {foreach $posts as $post}
+            <a name="postGarter={$post->getId()}"></a>
+
+            {include "../components/post.xml", post => $post, onWallOf => true, commentSection => true}
+        {/foreach}
+        {include "../components/paginator.xml", conf => $paginatorConf}
+    </div>
+{/block}

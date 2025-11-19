@@ -1,0 +1,349 @@
+{extends "../@layout.xml"}
+{block title}API: Сообщения{/block}
+{block header}{/block}
+{block content}
+<div style="display:block;">
+  <main style="max-width:1100px;margin:0 auto;padding:16px;">
+    <!-- Breadcrumb -->
+    <div style="margin-bottom:16px;">
+      <a href="/dev-api" style="color:#3b82f6;">← Назад к API</a>
+    </div>
+
+    <!-- Header -->
+    <div style="margin-bottom:24px;">
+      <h1 style="font-size:32px;font-weight:800;margin-bottom:8px;">Сообщения</h1>
+      <p style="color:#6b7280;">Методы для работы с личными сообщениями и диалогами</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:24px;">
+      <!-- Main content -->
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        
+        <!-- messages.send -->
+        <div id="send" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">messages.send</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Отправка личного сообщения пользователю.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">user_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID получателя</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">peer_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID диалога (альтернатива user_id)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">domain</code>
+                <span style="color:#6b7280;margin-left:8px;">— Короткий адрес пользователя</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">message</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— Текст сообщения</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">attachment</code>
+                <span style="color:#6b7280;margin-left:8px;">— Вложения (photo, video и т.д.)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">user_ids</code>
+                <span style="color:#6b7280;margin-left:8px;">— Список ID для массовой рассылки</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/messages.send.json<br/>user_id=123&message=Привет!</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;">1234 // ID отправленного сообщения</pre>
+          </div>
+        </div>
+
+        <!-- messages.getHistory -->
+        <div id="gethistory" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">messages.getHistory</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение истории сообщений с пользователем.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">user_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID пользователя</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">peer_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID диалога</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение (по умолчанию 0)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество сообщений (по умолчанию 20, макс. 200)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">start_message_id</code>
+                <span style="color:#6b7280;margin-left:8px;">— ID сообщения, с которого начать выборку</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">rev</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - вернуть в обратном порядке</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">extended</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - вернуть информацию о пользователях</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/messages.getHistory.json?user_id=123&count=20</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 20,
+  "items": [{
+    "id": 1234,
+    "user_id": 123,
+    "from_id": 456,
+    "date": 1609459200,
+    "read_state": 1,
+    "out": 0,
+    "text": "Привет!",
+    "body": "Привет!"
+  }]
+}</pre>
+          </div>
+        </div>
+
+        <!-- messages.getConversations -->
+        <div id="getconversations" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">messages.getConversations</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение списка диалогов пользователя.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">offset</code>
+                <span style="color:#6b7280;margin-left:8px;">— Смещение (по умолчанию 0)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">count</code>
+                <span style="color:#6b7280;margin-left:8px;">— Количество диалогов (по умолчанию 20)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">filter</code>
+                <span style="color:#6b7280;margin-left:8px;">— Фильтр: "all" (по умолчанию)</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">extended</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - вернуть информацию о пользователях</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/messages.getConversations.json?count=10&extended=1</code>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "count": 10,
+  "items": [{
+    "conversation": {
+      "peer": {
+        "id": 123,
+        "type": "user",
+        "local_id": 123
+      },
+      "can_write": { "allowed": true }
+    },
+    "last_message": { ... }
+  }],
+  "profiles": [ ... ]
+}</pre>
+          </div>
+        </div>
+
+        <!-- messages.getById -->
+        <div id="getbyid" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">messages.getById</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение сообщений по их ID.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">message_ids</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID сообщений через запятую</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">preview_length</code>
+                <span style="color:#6b7280;margin-left:8px;">— Длина превью текста (0 = полный текст)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">GET /method/messages.getById.json?message_ids=123,456,789</code>
+          </div>
+        </div>
+
+        <!-- messages.delete -->
+        <div id="delete" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">messages.delete</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Удаление сообщений.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">message_ids</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID сообщений через запятую</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">spam</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - пометить как спам</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">delete_for_all</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - удалить для всех</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/messages.delete.json?message_ids=123,456</code>
+          </div>
+        </div>
+
+        <!-- messages.edit -->
+        <div id="edit" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#fed7aa;color:#92400e;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">POST</span>
+            <code style="font-size:18px;font-weight:600;">messages.edit</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Редактирование отправленного сообщения.</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">message_id</code>
+                <span style="color:#ef4444;margin-left:4px;">*</span>
+                <span style="color:#6b7280;margin-left:8px;">— ID сообщения</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">message</code>
+                <span style="color:#6b7280;margin-left:8px;">— Новый текст сообщения</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">attachment</code>
+                <span style="color:#6b7280;margin-left:8px;">— Новые вложения</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Пример:</div>
+            <code style="font-size:13px;color:#374151;">POST /method/messages.edit.json?message_id=123&message=Исправленный текст</code>
+          </div>
+        </div>
+
+        <!-- Long Poll -->
+        <div id="longpoll" style="border:1px solid #e5e7eb;border-radius:12px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="background:#dbeafe;color:#1d4ed8;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:600;">GET</span>
+            <code style="font-size:18px;font-weight:600;">messages.getLongPollServer</code>
+          </div>
+          <p style="color:#6b7280;margin-bottom:16px;">Получение данных для подключения к Long Poll серверу (получение событий в реальном времени).</p>
+          
+          <div style="margin-bottom:16px;">
+            <div style="font-weight:600;margin-bottom:8px;">Параметры:</div>
+            <div style="border-left:3px solid #e5e7eb;padding-left:12px;display:flex;flex-direction:column;gap:8px;">
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">need_pts</code>
+                <span style="color:#6b7280;margin-left:8px;">— 1 - вернуть поле pts</span>
+              </div>
+              <div>
+                <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">lp_version</code>
+                <span style="color:#6b7280;margin-left:8px;">— Версия Long Poll (3 по умолчанию)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;">
+            <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:#15803d;">Ответ:</div>
+            <pre style="font-size:13px;color:#166534;margin:0;white-space:pre-wrap;">{
+  "key": "abc123...",
+  "server": "https://vsetke.fun/nim123",
+  "ts": 1609459200
+}</pre>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside style="position:sticky;top:12px;">
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;">
+          <div style="font-weight:700;margin-bottom:12px;">На этой странице</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+            <li><a href="#send" style="color:#3b82f6;font-size:14px;">send</a></li>
+            <li><a href="#gethistory" style="color:#3b82f6;font-size:14px;">getHistory</a></li>
+            <li><a href="#getconversations" style="color:#3b82f6;font-size:14px;">getConversations</a></li>
+            <li><a href="#getbyid" style="color:#3b82f6;font-size:14px;">getById</a></li>
+            <li><a href="#delete" style="color:#3b82f6;font-size:14px;">delete</a></li>
+            <li><a href="#edit" style="color:#3b82f6;font-size:14px;">edit</a></li>
+            <li><a href="#longpoll" style="color:#3b82f6;font-size:14px;">Long Poll</a></li>
+          </ul>
+        </div>
+
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
+          <div style="font-weight:700;margin-bottom:12px;">Другие разделы</div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;">
+            <li><a href="/dev-api/auth" style="color:#6b7280;font-size:14px;">Авторизация</a></li>
+            <li><a href="/dev-api/users" style="color:#6b7280;font-size:14px;">Пользователи</a></li>
+            <li><a href="/dev-api/groups" style="color:#6b7280;font-size:14px;">Группы</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+  </main>
+</div>
+{/block}

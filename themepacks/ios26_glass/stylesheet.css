@@ -1,0 +1,1288 @@
+/* OpenVK Glass Theme - Pure Glassmorphism - Improved Dark White Accent */
+/* Сохраняем оригинальную структуру, улучшаем стеклянные эффекты */
+
+/* Глобальные переменные для тёмной темы с белыми акцентами */
+:root {
+  --glass-primary: rgba(0, 0, 0, 0.3);
+  --glass-secondary: rgba(0, 0, 0, 0.4);
+  --glass-tertiary: rgba(0, 0, 0, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-border-light: rgba(255, 255, 255, 0.2);
+  --glass-shadow: rgba(0, 0, 0, 0.4);
+  --glass-highlight: rgba(255, 255, 255, 0.1);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.9);
+  --text-muted: rgba(255, 255, 255, 0.7);
+  --accent-color: #ffffff;
+  --accent-hover: rgba(255, 255, 255, 0.8);
+  --danger-color: #ff4757;
+  --success-color: #2ed573;
+}
+
+/* Основной фон с тёмным градиентом */
+body {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) fixed !important;
+  color: var(--text-primary) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  padding-top: 10px !important;
+}
+
+/* Улучшенный стеклянный фон для body */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(26, 26, 46, 0.2) 0%, transparent 50%);
+  backdrop-filter: blur(40px) brightness(0.8);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Исправление для проблемных элементов */
+.postFeedWrapper .commentsTextFieldWrap,
+.verticalGrayTabsWrapper,
+.messenger-app--input,
+#votesBalance,
+#news .container_gray,
+#bday .container_gray,
+#votesBalance,
+#news,
+#bday {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    0 4px 20px var(--glass-shadow),
+    inset 0 1px 0 var(--glass-highlight) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Исправление для container_gray scroll_container */
+.container_gray .scroll_container {
+  background: transparent !important;
+  border: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Исправление скачущего контента */
+.page_content {
+  background: var(--glass-secondary);
+  overflow-anchor: none !important;
+  width: 800px;
+}
+
+#upload_container .upload_container_element {
+    border: 0px solid #d6d6d6;
+    background: var(--glass-secondary);
+}
+
+.ovk-diag-body .searchBox {
+    background: #e6e6e6;
+}
+
+.right_big_block {
+    width: 589px;
+    float: left;
+}
+
+.page_content.overscrolled {
+  background: transparent !important;
+  transform: none !important;
+}
+
+/* Исправление content_subtitle */
+.content_subtitle {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border-bottom: 0px solid var(--glass-border-light) !important;
+  border-top: 0px solid var(--glass-border-light) !important;
+}
+
+/* Основные контейнеры */
+.wrap1, .wrap2, .page-wrap, #wrapH, #wrapHI {
+  background: var(--glass-primary) !important;
+  backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    0 8px 32px var(--glass-shadow),
+    inset 0 1px 0 var(--glass-highlight) !important;
+  margin: 10px 0 !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important; 
+}
+
+.ctx_place {
+    position: relative;
+	margin: 5px 0 !important;
+}
+
+.settings_delete {
+    margin: -12px;
+    padding: 12px;
+    margin-top: -8px;
+    background: rgba(0, 0, 0, 0);
+    text-align: center;
+}
+
+.wrap1:hover, .wrap2:hover, .page-wrap:hover, #wrapH:hover, #wrapHI:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 var(--glass-highlight) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+.left_small_block {
+    float: left;
+    width: 200px;
+    margin-right: 10px;
+    border-right: 0px #eeeeee solid;
+}
+
+.avatar_block *, .avatar_block .avatarDelete::before {
+	border-radius: 12px !important;
+	transition: all 200ms ease-in-out;
+}
+
+.post-share-button, .post-like-button {
+    display: flex;
+    padding: 2px;
+    border-radius: 2px;
+    transition-duration: 0.2s;
+}
+
+.post-share-button:hover, .post-like-button:hover {
+    background-color: rgb(255 0 0);
+}
+
+#standaloneCommentBox {
+    position: sticky;
+    top: 0;
+    background-color: rgba(0,0,0,0) !important;
+    border-bottom: 1px dotted #8b8b8b;
+    z-index: 10;
+}
+
+/* Шапка сайта */
+.page_header {
+  background: url(/themepack/ios26_glass/0.0.4.0/resource/header_custom.png);
+  backdrop-filter: blur(25px) saturate(200%);
+  width: 990px;
+  background-repeat: no-repeat;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px var(--glass-shadow) !important;
+}
+
+.content_title_unexpanded {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px var(--glass-shadow) !important;
+}
+
+/* Навигация в шапке */
+.header_navigation .link {
+  background: transparent !important;
+}
+
+.header_navigation .link a {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.header_navigation .link a:hover {
+  color: var(--accent-color) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Боковая панель */
+.sidebar {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px var(--glass-shadow) !important;
+  margin: 20px 0px 0px 0px;
+}
+
+/* Навигация в боковой панели */
+.navigation {
+  background: transparent !important;
+}
+
+.navigation .link {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+  margin: 4px 0 !important;
+  padding: 8px 12px !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.navigation .link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+  transition: left 0.6s;
+}
+
+.navigation .link:hover::before {
+  left: 100%;
+}
+
+.navigation .link:hover {
+  background: var(--glass-tertiary) !important;
+  transform: translateX(5px) !important;
+}
+
+/* Заголовки страниц */
+.page_yellowheader {
+  background: linear-gradient(135deg, rgb(255 255 255 / 30%), rgb(255 255 255 / 30%)) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+}
+
+.small-textarea {
+    height: 35px;
+}
+
+#wallAttachmentMenu {
+    position: absolute;
+    min-width: 94px;
+    border: 1px solid var(--glass-border) !important;
+    background-color: var(--glass-secondary) !important;
+    z-index: 32;
+    margin-top: -7px;
+    margin-left: -16px;
+    box-shadow: 0 1px 3px -1px;
+    user-select: none;
+}
+
+#wallAttachmentMenu>.header {
+    padding: 6px 15px;
+    background-color: var(--glass-secondary);
+    text-align: center;
+}
+
+.audiosDiv {
+    width: 108.1%;
+    display: flex;
+    margin: 0px 0px -10px -12px;
+}
+
+.page_yellowheader span,
+.page_yellowheader a {
+  color: var(--accent-color) !important;
+}
+
+/* Расширенный заголовок контента */
+.content_title_expanded {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px var(--glass-shadow) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Контейнеры с контентом */
+
+#auth .container_gray {
+  width: 808px;
+}
+
+.container_gray {
+  background: transparent !important;
+}
+
+.container_gray .content {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 15px var(--glass-shadow) !important;
+}
+
+.commentsTextFieldWrap {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 15px var(--glass-shadow) !important;
+}
+
+/* Посты - исправленная версия */
+.post, .wall_post {
+  background: var(--glass-tertiary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 15px var(--glass-shadow) !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  width: auto !important;
+  max-width: 100% !important;
+  margin: 10px 0 !important;
+  padding: 15px !important;
+  box-sizing: border-box !important;
+}
+
+.post:hover, .wall_post:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+  border-color: var(--accent-color) !important;
+}
+
+/* Исправление меню вложений */
+.wallAttachmentMenu {
+  position: absolute !important;
+  z-index: 1000 !important;
+  background: var(--glass-primary) !important;
+  backdrop-filter: blur(25px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  overflow: visible !important;
+}
+
+.wallAttachmentMenu * {
+  position: relative;
+  z-index: 1001 !important;
+}
+
+.post-content .media {
+    max-width: 95%;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* Исправление для ссылок в тексте */
+.post-content .text a {
+  color: var(--accent-color) !important;
+  text-decoration: underline !important;
+}
+
+/* Улучшение отображения цитат и форматирования */
+.post-content .text blockquote {
+  border-left: 3px solid var(--accent-color) !important;
+  margin: 10px 0 !important;
+  padding: 8px 12px !important;
+  background: var(--glass-primary) !important;
+  border-radius: 0 8px 8px 0 !important;
+}
+
+/* Кнопки с белыми акцентами */
+.button, input[type="button"], input[type="submit"] {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7)) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px !important;
+  color: #000000 !important;
+  padding: 8px 16px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgb(0 0 0 / 30%), transparent);
+  transition: left 0.5s;
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3) !important;
+  background: linear-gradient(135deg, rgb(255 0 0), rgb(137 0 0 / 80%)) !important;
+  color: var(--accent-color) !important;
+}
+
+/* Ссылки профиля как кнопки */
+#profile_link, .profile_link {
+  background: linear-gradient(135deg, rgb(111 111 111 / 90%), rgb(63 60 60 / 70%)) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  padding: 8px 16px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s ease !important;
+  display: inline-block !important;
+  text-decoration: none !important;
+  margin: 2px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+#profile_link::before, .profile_link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+#profile_link:hover::before, .profile_link:hover::before {
+  left: 100%;
+}
+
+#profile_link:hover, .profile_link:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3) !important;
+  background: linear-gradient(135deg, rgb(215 0 0 / 90%), rgb(207 0 0 / 70%)) !important;
+  text-decoration: none !important;
+  color: #ffffff !important;
+}
+
+.summaryBar .summary {
+    color: var(--text-primary) !important;
+    font-weight: bold;
+    padding-top: 3px;
+    padding-bottom: 4px;
+    display: inline-block;
+}
+
+.searchList #used, .verticalGrayTabs #used {
+    color: #000000 !important;
+    padding: 5px 9px 5px 9px;
+    border: solid 0.125rem rgba(255, 255, 255, 0.5) !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7)) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2) !important;
+}
+
+.searchList #used a, .verticalGrayTabs #used a {
+    color: #000000 !important;
+    font-weight: 600;
+}
+
+.searchList a:hover, .verticalGrayTabs a:hover {
+    margin-left: 0px;
+    color: var(--text-primary) !important;
+    background: var(--glass-tertiary) !important;
+}
+
+#upload_container {
+    background: rgba(0,0,0,0) !important; 
+    padding: 30px 80px 20px;
+    margin: 10px 25px 30px;
+    border: 0px solid #d6d6d6;
+}
+
+.page_wrap {
+    border-bottom: solid 0px #c3cad2;
+    border-left: solid 0px #d5dde6;
+    border-right: solid 0px #d5dde6;
+}
+
+#faqhead {
+    background: rgba(0,0,0,0) !important; 
+    margin: 0 5px;
+    padding: 5px;
+    font-weight: bold;
+    border: 0px solid #d7cf9e;
+    border-bottom: 0;
+}
+
+#faqcontent {
+    background: rgba(0,0,0,0) !important; 
+    margin: 0 5px 10px;
+    padding: 5px 5px 5px 10px;
+    border: 1px solid #ddd;
+}
+
+#audio_upload {
+    width: 350px;
+    margin: 20px auto;
+    margin-bottom: 10px;
+    padding: 15px 0;
+    border: 0px solid #ccc;
+    background-color: rgba(0,0,0,0) !important;
+    text-align: center;
+}
+
+/* Поля ввода */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type~="text"],
+input[type~="password"],
+input[type~="email"],
+input[type~="search"],
+input[type~="date"],
+textarea,
+select {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+  padding: 8px 12px !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    0 2px 8px var(--glass-shadow) !important;
+  transition: all 0.3s ease !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 
+    0 0 0 2px rgba(255, 255, 255, 0.2),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Заголовки */
+.header2, h4 {
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--glass-border-light) !important;
+}
+
+.profileName, .profileName h2 {
+  color: var(--text-primary) !important;
+}
+
+/* Аватарки и изображения */
+.ava, .avatar-list-item .avatar img, .crp-entry--image > img {
+  border-radius: 12px !important;
+  border: 2px solid var(--glass-border) !important;
+  box-shadow: 0 4px 15px var(--glass-shadow) !important;
+  transition: all 0.3s ease !important;
+}
+
+.ava:hover, .avatar-list-item .avatar img:hover {
+  transform: scale(1.05) !important;
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Сообщения и уведомления */
+.msg, .user-alert, .group-alert {
+  background: var(--glass-primary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 15px var(--glass-shadow) !important;
+  color: var(--text-primary) !important;
+}
+
+.msg.msg_succ {
+  border-color: var(--success-color) !important;
+  background: linear-gradient(135deg, rgba(46, 213, 115, 0.2), var(--glass-primary)) !important;
+}
+
+.msg.msg_err {
+  border-color: var(--danger-color) !important;
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.2), var(--glass-primary)) !important;
+}
+
+/* Вкладки */
+.tabs, .mb_tabs {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 8px !important;
+  width: 803px;
+  box-shadow: 0 2px 10px var(--glass-shadow) !important;
+}
+
+.tab, .mb_tab {
+  background: transparent !important;
+  border-radius: 6px !important;
+  color: var(--text-primary) !important;
+  transition: all 0.3s ease !important;
+}
+
+.tab:hover, .mb_tab:hover {
+  background: var(--glass-tertiary) !important;
+  transform: translateY(-1px) !important;
+}
+
+#activetabs, .mb_tab#active {
+    background: linear-gradient(135deg, rgb(255 0 0 / 90%), rgb(149 0 0)) !important;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, .2) !important;
+    color: #000000 !important;
+}
+
+.crp-entry--message---text {
+    color: #ffffff;
+}
+
+.postFeedWrapper {
+    padding: 15px !important;
+    background-color: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    width: auto !important;
+}
+
+.searchList li, .searchList a, .verticalGrayTabs a {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary) !important; 
+    cursor: pointer;
+    padding: 5px 9px 5px 9px;
+}
+
+.crp-entry--message.unread {
+    padding: 3px;
+    width: 395px;
+    background: var(--glass-primary) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 15px var(--glass-shadow) !important;
+    color: var(--text-primary) !important;
+}
+
+.accent-box {
+    background-color: var(--glass-primary) !important;
+    padding: 10px;
+    margin: 5px;
+    border: 1px solid #C0CAD5;
+}
+
+element.style {
+    background: var(--glass-primary);
+    border: #DEDEDE solid 0px;
+}
+
+/* Прогресс бары */
+.completeness-gauge, .poll-result-bar {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.completeness-gauge > div, .poll-result-bar-sub {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7)) !important;
+  border-radius: 8px !important;
+}
+
+/* Иконки */
+.heart, .pinned-mark, .repost-icon {
+  filter: brightness(0) invert(1) !important;
+  opacity: 0.8;
+  transition: all 0.3s ease !important;
+}
+
+.heart:hover, .pinned-mark:hover, .repost-icon:hover {
+  opacity: 1;
+  transform: scale(1.1) !important;
+  filter: brightness(0) invert(1) drop-shadow(0 0 6px var(--accent-color)) !important;
+}
+
+/* Списки сообщений */
+.crp-list, .messenger-app {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(25px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px var(--glass-shadow) !important;
+  width: 821px;
+}
+
+.content_page_error {
+    background: var(--glass-primary);
+    border: #DEDEDE solid 0px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.crp-entry, .messenger-app--messages---message {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+}
+
+.crp-entry:hover, .messenger-app--messages---message:hover {
+  background: var(--glass-tertiary) !important;
+  transform: translateX(3px) !important;
+}
+
+/* Аудио плеер */
+.bigPlayer, .audioEntry {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 12px !important;
+  width: auto;
+  box-shadow: 0 4px 15px var(--glass-shadow) !important;
+}
+
+.audioEntry:hover {
+  background: var(--glass-tertiary) !important;
+  transform: translateY(-2px) !important;
+  border-color: var(--accent-color) !important;
+}
+
+.audioEntry.nowPlaying {
+  background: linear-gradient(135deg, rgb(203 0 0 / 90%), rgb(197 0 0 / 70%)) !important;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2) !important;
+  color: #000000 !important;
+}
+
+#ajax_audio_player {
+    transition: background .1s ease-out;
+    background: var(--glass-secondary) !important;
+    padding: 1px;
+    width: 500px;
+    height: 37px;
+    position: fixed;
+    z-index: 1025;
+    border-radius: 3px;
+}
+
+.page_wrap_content .page_search_options .search_option .search_option_name {
+    cursor: pointer;
+    background-color: var(--glass-secondary);
+    padding: 5px 5px 5px 5px;
+    font-weight: 600;
+    color: var(--accent-color);
+    border-bottom: 2px solid #E4E4E4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Поиск */
+.header_search_input, #search_box input[type='search'] {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 20px !important;
+  color: var(--text-primary) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.header_search_input:focus, #search_box input[type='search']:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Модальные окна */
+.ovk-diag, .ovk-photo-view, .page_status_popup {
+  background: var(--glass-primary) !important;
+  backdrop-filter: blur(35px) saturate(200%);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+.ovk-diag-head {
+  background: linear-gradient(135deg, var(--glass-primary), var(--glass-secondary)) !important;
+  backdrop-filter: blur(25px);
+  border-radius: 16px 16px 0 0 !important;
+  border: none !important;
+  color: var(--text-primary) !important;
+}
+
+/* Таблицы */
+.ugc-table {
+  background: transparent !important;
+}
+
+.ugc-table td {
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+  width: 70%;
+}
+
+.label {
+  color: var(--text-muted) !important;
+}
+
+/* Подвал */
+.page_footer {
+  background: transparent !important;
+}
+
+.page_footer .link {
+  color: var(--text-muted) !important;
+  transition: all 0.3s ease !important;
+}
+
+.page_footer .link:hover {
+  color: var(--accent-color) !important;
+  background-color: var(--glass-primary);
+  transform: translateY(-1px) !important;
+}
+
+/* Вспомогательные тексты */
+.nobold, nobold, .page_status, .post-author .date, .post-signature span,
+.crp-entry--info span, .edit_link, .content_subtitle, .notes_titles small {
+  color: var(--text-muted) !important;
+}
+
+/* Хлебные крошки и навигация */
+.paginator a {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 6px !important;
+  color: var(--text-primary) !important;
+  transition: all 0.3s ease !important;
+}
+
+.paginator a:hover, .paginator a.active {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7)) !important;
+  transform: translateY(-1px) !important;
+  color: #000000 !important;
+}
+
+.page_wrap_content_main {
+	width: 79%;
+}
+
+.left_big_block {
+    width: 587px;
+    float: left;
+    margin-right: 13px;
+}
+
+.def_row_content {
+	background: var(--glass-secondary) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border-light) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px var(--glass-shadow) !important;
+    padding: 3px 1px;
+}
+
+
+/* Альбомы и фотографии */
+.album {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 15px var(--glass-shadow) !important;
+}
+
+.album-photo img {
+  background: var(--glass-primary) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px !important;
+}
+
+/* Уведомления */
+.notification_ballon {
+  background: var(--glass-primary) !important;
+  backdrop-filter: blur(25px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px var(--glass-shadow) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Диалоги */
+.ovk-diag-cont {
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(35px);
+}
+
+.ovk-diag {
+  background: var(--glass-primary) !important;
+  backdrop-filter: blur(30px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 16px !important;
+}
+
+.ovk-diag-body {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+.ovk-diag-action {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--glass-border-light) !important;
+}
+
+/* Аудио стили */
+.audiosPaddingContainer {
+  background: transparent !important;
+}
+
+.musicIcon {
+  opacity: 0.8;
+  transition: all 0.3s ease !important;
+}
+
+.musicIcon:hover {
+  opacity: 1;
+  transform: scale(1.1) !important;
+}
+
+/* Документы */
+#docs_page_wrapper {
+  background: transparent !important;
+}
+
+#docs_page_wrapper .docs_page_search {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border-light) !important;
+}
+
+.docListViewItem {
+  background: transparent !important;
+  border-bottom: 1px solid var(--glass-border-light) !important;
+  transition: all 0.3s ease !important;
+}
+
+.docListViewItem:hover {
+  background: var(--glass-tertiary) !important;
+  transform: translateX(3px) !important;
+}
+
+/* Статьи */
+.articleView {
+  background: var(--glass-primary) !important;
+  backdrop-filter: blur(35px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+  color: var(--text-primary) !important;
+}
+
+.articleView_text {
+  color: var(--text-secondary) !important;
+}
+
+/* Кастомные скроллбары */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--glass-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Анимации */
+@keyframes glassSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wrap1, .wrap2, .page-wrap, .post, .sidebar {
+  animation: glassSlideIn 0.6s ease-out;
+}
+
+.page_body {
+    width: 830px;
+    float: right;
+    margin-right: 15px;
+    margin-top: 10px;
+    font-size: 11px;
+    text-align: left;
+}
+
+/* Эффект свечения для важных элементов */
+.glass-glow {
+  position: relative;
+}
+
+.like_tooltip_wrapper .like_tooltip_head {
+    background: linear-gradient(180deg, #595959, #515151);
+    box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.18) inset;
+    border: solid 1px #575757;
+    padding: 4px 10px;
+    width: 180px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.like_tooltip_body {
+    background: #ffffff;
+    padding: 10px;
+    border: 1px solid #878787;
+    cursor: default;
+}
+
+.glass-glow::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+  border-radius: inherit;
+  z-index: -1;
+  animation: glowPulse 3s ease-in-out infinite;
+  filter: blur(8px);
+  opacity: 0.5;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* Поддержка старых браузеров */
+@supports not (backdrop-filter: blur(10px)) {
+  .wrap1, .wrap2, .page-wrap, .sidebar, .post, .container_gray .content {
+    background: rgba(30, 30, 40, 0.95) !important;
+	padding-top: 10px;
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .wrap1, .wrap2, .page-wrap, #wrapH, #wrapHI {
+    margin: 8px !important;
+    border-radius: 12px !important;
+  }
+  
+  .sidebar {
+    border-radius: 10px !important;
+  }
+  
+  .post, .wall_post {
+    padding: 12px !important;
+    margin: 8px 0 !important;
+  }
+  
+  .post-content .text {
+    font-size: 16px !important;
+    padding: 6px 2px !important;
+  }
+  
+  .post-author {
+    padding: 8px !important;
+  }
+}
+
+.post-author {
+    background-color: var(--glass-primary);
+    border-top: var(--glass-border);
+    border-bottom: var(--glass-border);
+}
+
+.attachment_selector .topGrayBlock {
+    background: var(--glass-secondary);
+    height: 37px;
+    border-bottom: 1px solid #C7C7C7;
+    padding: 3px 10px;
+    align-items: center;
+    justify-content: center;
+    justify-content: space-between;
+}
+
+.attachment_selector #attachment_insert #attachment_insert_count {
+    position: fixed;
+    z-index: 1007;
+    width: 92%;
+    background: var(--glass-secondary);
+    margin-top: -5px;
+    padding-top: 6px;
+}
+
+#show_more {
+    width: 100%;
+    text-align: center;
+    background: var(--glass-secondary);
+    height: 22px;
+    padding-top: 9px;
+    cursor: pointer;
+    margin-top: 4px;
+}
+
+#show_more:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(255, 255, 255, .3) !important;
+    background: linear-gradient(135deg, rgb(255, 0, 0), rgba(137, 0, 0, 0.8)) !important;
+    color: var(--accent-color) !important;
+}
+
+.v {
+    background-color: var(--glass-primary);
+    max-width: 300px;
+    overflow-x: auto;
+    word-wrap: break-word;
+}
+
+.e {
+    background-color: var(--glass-primary);
+    width: 300px;
+    font-weight: bold;
+}
+
+.h {
+    background-color: #5d0000;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Финальные правки для читаемости */
+a {
+  color: var(--accent-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+a:hover {
+  color: var(--accent-color) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Улучшаем контрастность текста */
+span, p, li, td {
+  color: var(--text-secondary) !important;
+}
+
+strong, b {
+  color: var(--text-primary) !important;
+}
+
+/* Эффект параллакса для глубины */
+.layout {
+  position: relative;
+  z-index: 1;
+  width: 990px;
+  margin: 0 auto;
+}
+
+/* Специальные эффекты для премиум-вида */
+.premium-glass {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15),
+    rgba(0, 0, 0, 0.3)
+  ) !important;
+  backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Анимация частиц для интерактивных элементов */
+.interactive-glass {
+  position: relative;
+  overflow: hidden;
+}
+
+.interactive-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent
+  );
+  transition: left 0.6s;
+}
+
+.interactive-glass:hover::before {
+  left: 100%;
+}
+
+/* Фон с шумом для текстуры */
+.noise-texture::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+/* Улучшение подписи и меню поста */
+.post-signature {
+  margin: 8px 0 !important;
+  padding: 0 4px !important;
+}
+
+.post-menu {
+  padding: 8px 4px !important;
+  font-size: 12px !important;
+}
+
+/* Улучшение отображения комментариев */
+.comment {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  margin: 8px 0 !important;
+  width: auto !important;
+}
+
+/* Улучшение текстовых полей */
+.commentsTextFieldWrap {
+  background: var(--glass-secondary) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 12px !important;
+  padding: 12px !important;
+  margin: 10px 0 !important;
+  width: auto !important;
+}	

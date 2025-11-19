@@ -1,0 +1,56 @@
+{extends "../@layout.xml"}
+
+{block title}История — {$title} — {$club->getName()}{/block}
+
+{block header}
+  История изменений
+{/block}
+
+{block content}
+  <div class="clear_fix">
+    <div class="left_big_block">
+      <div class="page_block">
+        <div class="page_block_header clear_fix">
+          <div class="page_block_header_inner _header">
+            <h1 class="page_block_h1">{$title}</h1>
+            <div class="right">
+              <a href="{$club->getURL()}/wiki/{$slug}">К странице</a>
+            </div>
+          </div>
+        </div>
+        <div class="page_block_content">
+          {if empty($revisions)}
+            <div class="msg msg_info">Пока нет ревизий.</div>
+          {else}
+            <ul class="list_docs">
+              {foreach $revisions as $r}
+                <li class="list_item">
+                  <div>
+                    <b>#{$r->getRev()}</b>
+                    <span class="sub_caption">{$r->getCreatedAt()|date:'d.m.Y H:i'}</span>
+                  </div>
+                  <div class="sub_caption">Автор: ID {$r->getAuthorId()}</div>
+                  {if !is_null($user) && $club->getOwner()->getId() === $user->id}
+                    <a href="{$club->getURL()}/wiki/{$slug}/revert/{$r->getRev()}" data-method="post" class="button" style="margin-top:6px;">Откатить</a>
+                  {/if}
+                </li>
+              {/foreach}
+            </ul>
+          {/if}
+        </div>
+      </div>
+    </div>
+    <div class="right_small_block">
+      <div class="page_block">
+        <div class="page_block_header">
+          <div class="page_block_h2">Действия</div>
+        </div>
+        <div class="page_block_content">
+          {if !is_null($user) && $club->getOwner()->getId() === $user->id}
+            <a href="{$club->getURL()}/wiki/{$slug}/edit" class="button" style="width:100%;">Редактировать</a>
+          {/if}
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}
